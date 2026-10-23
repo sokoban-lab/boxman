@@ -3532,8 +3532,8 @@ public class myGameView extends JFrame {
         if (open >= 0 && close >= 0) {
             try {
                 String[] xy = firstLine.substring(open + 1, close).split(",");
-                row = Integer.parseInt(xy[1]) - 1;
-                col = Integer.parseInt(xy[0]) - 1;
+                row = Integer.parseInt(xy[1].trim()) - 1;   // 允许 "[19, 18]" 的逗号后空格
+                col = Integer.parseInt(xy[0].trim()) - 1;
                 if (row < 0 || col < 0 || row >= myMaps.curMap.Rows || col >= myMaps.curMap.Cols) {
                     row = -1;
                     col = -1;

@@ -315,6 +315,21 @@ public class Phase19GameViewOptionsMenuTest {
     }
 
     @Test
+    public void testImportedBackwardActionAcceptsSpaceAfterComma() {
+        win.bt_BK.setChecked(true);
+        myMaps.m_ActionIsPos = true;
+        myMaps.m_ActionIsTrun = false;
+        myMaps.sAction = new String[]{"[2, 2]r"};   // PC 版快手导出的坐标可能带空格
+        myMaps.m_ActionIsRedy = true;
+
+        win.processImportedAction();
+
+        assertFalse("逆推动作交接后应清除待执行标记", myMaps.m_ActionIsRedy);
+        assertEquals("应识别 \"[2, 2]\" 的坐标", 1, win.m_nRow2);
+        assertEquals("逆推的 r 应移动一格", 2, win.m_nCol2);
+    }
+
+    @Test
     public void testStateListSortsByTimeDescending() {
         myMaps.mState1.clear();
         for (String t : new String[]{"2026-01-01 00:00:00", "2026-09-25 12:00:00", "2025-12-31 23:59:59"}) {
