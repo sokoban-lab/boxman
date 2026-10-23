@@ -3539,3 +3539,37 @@ MSYS_NO_PATHCONV=1 java -cp "$CP" org.junit.runner.JUnitCore \
 `Phase43ClickContractTest`(13)、`compat/HoloTap`，
 以及 `Phase26` +1、`Phase30` +2 条回归锁。
 
+---
+
+## BUG 修复 —— 「逆推导入不认带空格的坐标 `[19, 18]`」（2026-10-23）
+
+### 1. 现象
+
+PC 版快手有时候导出的逆推动作，坐标的逗号后面带一个空格：`[19, 18]UUuullllddddrrrrdd`。
+这种串导进 PC 版会报「没有仓管员或其位置无效」，而 `[19,18]UUuullllddddrrrrdd` 正常。
+空格只出现在「坐标块」里，动作串本身不受影响。
+
+### 2. 根因
+
+`myGameView.executeImportedBackwardAction()` 把坐标块 `split(",")` 之后直接
+`Integer.parseInt(xy[1])`。Java 的 `Integer.parseInt(" 18")` 不认前导空格，会抛
+`NumberFormatException`；异常被 `catch (RuntimeException)` 吞掉，`row/col` 退回 `-1`，
+于是找不到仓管员。
+
+上游两道关卡都不拦它：`myMaps.isLURD2` 的字符白名单本来就含空格，`formatPath` 也只认
+`lurdLURD` 八个动作字符、其余一律忽略 —— 所以问题**只**在这一处。
+
+### 3. 修法
+
+两处 `parseInt` 前加 `trim()`（同一个 `split` 结果，`xy[0]` 也一并对齐）：
+
+```java
+row = Integer.parseInt(xy[1].trim()) - 1;   // 允许 "[19, 18]" 的逗号后空格
+col = Integer.parseInt(xy[0].trim()) - 1;
+```
+
+### 4. 回归测试
+
+`Phase19GameViewOptionsMenuTest` +1：`testImportedBackwardActionAcceptsSpaceAfterComma`
+（`[2, 2]r` 与既有的 `[2,2]r` 同断言）。18 个用例全绿。
+
