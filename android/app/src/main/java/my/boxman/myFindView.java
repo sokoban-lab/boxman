@@ -513,34 +513,33 @@ public class myFindView extends Activity {
     }
 
     public boolean onOptionsItemSelected(MenuItem mt) {
-        switch (mt.getItemId()) {
-            case android.R.id.home:  //标题栏返回键功能
+        if (mt.getItemId() == android.R.id.home) {  //标题栏返回键功能
                 this.finish();
 
                 return true;
-            case R.id.find_pre:  //上一关卡
+        } else if (mt.getItemId() == R.id.find_pre) {  //上一关卡
                 int n1 = myMaps.m_lstMaps.indexOf(myMaps.curMap);
                 if (n1 > 0) {
                     myLoadLevel(n1-1);
                 }
 
                 return true;
-            case R.id.find_next:  //下一关卡
+        } else if (mt.getItemId() == R.id.find_next) {  //下一关卡
                 int n2 = myMaps.m_lstMaps.indexOf(myMaps.curMap);
                 if (n2 >= 0 && n2+1 < myMaps.m_lstMaps.size()) {
                     myLoadLevel(n2+1);
                 }
 
                 return true;
-            case R.id.find_level:  //源关卡与相似关卡切换
+        } else if (mt.getItemId() == R.id.find_level) {  //源关卡与相似关卡切换
                 myLevel();
 
                 return true;
-            case R.id.find_trun:  //旋转关卡
+        } else if (mt.getItemId() == R.id.find_trun) {  //旋转关卡
                 myTrun();
 
                 return true;
-            case R.id.find_solution:  //答案
+        } else if (mt.getItemId() == R.id.find_solution) {  //答案
                 if (!m_Level && myMaps.curMap.Solved) {  //相似关卡，且有答案
                     mySQLite.m_SQL.load_SolitionList(myMaps.curMap.key);  //加载答案列表
                     myMaps.curMap.Solved = (myMaps.mState2.size() > 0); //修正相似关卡预览图之是否有答案
@@ -562,7 +561,7 @@ public class myFindView extends Activity {
                         MyToast.showToast(this, "相似关卡也没有答案！", Toast.LENGTH_SHORT);
                 }
                 return true;
-            case R.id.find_level_all:  //关卡全貌
+        } else if (mt.getItemId() == R.id.find_level_all) {  //关卡全貌
                 mMap.m_Level_All = !mMap.m_Level_All;
                 mt.setChecked(mMap.m_Level_All);
                 if (mMap.m_Level_All) {  //关卡全貌
@@ -590,13 +589,13 @@ public class myFindView extends Activity {
                 mMap.invalidate();
 
                 return true;
-            case R.id.find_about:  //关卡信息
+        } else if (mt.getItemId() == R.id.find_about) {  //关卡信息
                 Intent intent1 = new Intent();
                 intent1.setClass(this, myAbout2.class);
                 startActivity(intent1);
 
                 return true;
-            case R.id.find_help:  //操作说明
+        } else if (mt.getItemId() == R.id.find_help) {  //操作说明
                 Intent intent0 = new Intent(this, Help.class);
                 //用Bundle携带数据
                 Bundle bundle0 = new Bundle();
@@ -607,7 +606,7 @@ public class myFindView extends Activity {
                 startActivity(intent0);
 
                 return true;
-            default:
+        } else {
                 return super.onOptionsItemSelected(mt);
         }
     }

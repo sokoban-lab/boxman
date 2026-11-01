@@ -481,13 +481,12 @@ public class mySubmitList extends Activity {
 	}
 
 	public boolean onOptionsItemSelected(MenuItem mt) {
-	    switch (mt.getItemId()) {
 		//菜单栏返回键功能
-		case android.R.id.home:
+	    if (mt.getItemId() == android.R.id.home) {
 			this.finish();
 
 			return true;
-		case R.id.submit_list_reload:  //刷新
+	    } else if (mt.getItemId() == R.id.submit_list_reload) {  //刷新
 			mList1.clear();
 			mList2.clear();
 			mList3.clear();
@@ -499,8 +498,8 @@ public class mySubmitList extends Activity {
 			dialog.show();
 
 			return true;
-       default:
+	    } else {
        		return super.onOptionsItemSelected(mt);
-       }
+	    }
 	}
 }

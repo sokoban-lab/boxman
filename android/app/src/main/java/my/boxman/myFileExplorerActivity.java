@@ -130,12 +130,11 @@ public class myFileExplorerActivity extends Activity {
 	}
 
 	public boolean onOptionsItemSelected(MenuItem mt) {
-		switch (mt.getItemId()) {
 			//标题栏返回键功能
-			case android.R.id.home:
+		if (mt.getItemId() == android.R.id.home) {
 				this.finish();
 				return true;
-			case R.id.filelist_ok:  // 完成
+		} else if (mt.getItemId() == R.id.filelist_ok) {  // 完成
 				// 保存自定义位置
 				String str = textView.getText().toString();
 //				if (!str.isEmpty()) {
@@ -146,10 +145,10 @@ public class myFileExplorerActivity extends Activity {
 //				}
 				this.finish();
 				return true;
-			case R.id.filelist_parent:  // 上一级
+		} else if (mt.getItemId() == R.id.filelist_parent) {  // 上一级
 				myParent();
 				return true;
-			default:
+		} else {
 				return super.onOptionsItemSelected(mt);
 		}
 	}

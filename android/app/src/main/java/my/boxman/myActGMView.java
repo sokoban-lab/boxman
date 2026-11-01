@@ -665,14 +665,13 @@ public class myActGMView extends Activity {
 		Matcher m;
 		StringBuffer sb;
 
-		switch (mt.getItemId()) {
 			//菜单栏返回键功能
-			case android.R.id.home:
+		if (mt.getItemId() == android.R.id.home) {
 				//内容有变化，提问是否保存
 				if (flg && et_Action.getText().toString().replaceAll("[ \n\r\t]", "").length() > 0) isSaveDlg.show();
 				else finish();
 				return true;
-			case R.id.act_about:  //“导入”说明
+		} else if (mt.getItemId() == R.id.act_about) {  //“导入”说明
 				Intent intent0 = new Intent(this, Help.class);
 				//用Bundle携带数据
 				Bundle bundle0 = new Bundle();
@@ -683,7 +682,7 @@ public class myActGMView extends Activity {
 				startActivity(intent0);
 
 				return true;
-			case R.id.act_micro_about:  //“宏”功能说明
+		} else if (mt.getItemId() == R.id.act_micro_about) {  //“宏”功能说明
 				Intent intent1 = new Intent(this, Help.class);
 				//用Bundle携带数据
 				Bundle bundle1 = new Bundle();
@@ -695,7 +694,7 @@ public class myActGMView extends Activity {
 
 
 				return true;
-			case R.id.act_L_90:  //左旋90度（Lurd）
+		} else if (mt.getItemId() == R.id.act_L_90) {  //左旋90度（Lurd）
 				if (myMaps.isLURD(et_Action.getText().toString())) {
 					m = p.matcher(et_Action.getText());
 					sb = new StringBuffer();
@@ -715,7 +714,7 @@ public class myActGMView extends Activity {
 					MyToast.showToast(this, "仅支持规范的动作字符！", Toast.LENGTH_SHORT);
 				}
 				return true;
-			case R.id.act_R_90:  //右旋90度（Lurd）
+		} else if (mt.getItemId() == R.id.act_R_90) {  //右旋90度（Lurd）
 				if (myMaps.isLURD(et_Action.getText().toString())) {
 					m = p.matcher(et_Action.getText());
 					sb = new StringBuffer();
@@ -735,7 +734,7 @@ public class myActGMView extends Activity {
 					MyToast.showToast(this, "仅支持规范的动作字符！", Toast.LENGTH_SHORT);
 				}
 				return true;
-			case R.id.act_180:  //右旋180度（Lurd）
+		} else if (mt.getItemId() == R.id.act_180) {  //右旋180度（Lurd）
 				if (myMaps.isLURD(et_Action.getText().toString())) {
 					m = p.matcher(et_Action.getText());
 					sb = new StringBuffer();
@@ -755,7 +754,7 @@ public class myActGMView extends Activity {
 					MyToast.showToast(this, "仅支持规范的动作字符！", Toast.LENGTH_SHORT);
 				}
 				return true;
-			case R.id.act_LR:  //左右翻转（Lurd）
+		} else if (mt.getItemId() == R.id.act_LR) {  //左右翻转（Lurd）
 				if (myMaps.isLURD(et_Action.getText().toString())) {
 					m = p.matcher(et_Action.getText());
 					sb = new StringBuffer();
@@ -775,7 +774,7 @@ public class myActGMView extends Activity {
 					MyToast.showToast(this, "仅支持规范的动作字符！", Toast.LENGTH_SHORT);
 				}
 				return true;
-			case R.id.act_UD:  //上下翻转（Lurd）
+		} else if (mt.getItemId() == R.id.act_UD) {  //上下翻转（Lurd）
 				if (myMaps.isLURD(et_Action.getText().toString())) {
 					m = p.matcher(et_Action.getText());
 					sb = new StringBuffer();
@@ -795,12 +794,12 @@ public class myActGMView extends Activity {
 					MyToast.showToast(this, "仅支持规范的动作字符！", Toast.LENGTH_SHORT);
 				}
 				return true;
-			case R.id.act_recording:
+		} else if (mt.getItemId() == R.id.act_recording) {
 				myMaps.isRecording = true;  //开启录制模式
 				if (flg && et_Action.getText().toString().replaceAll("[ \n\r\t]", "").length() > 0) isSaveDlg.show();
 				else finish();
 				return true;
-			default:
+		} else {
 				return super.onOptionsItemSelected(mt);
 		}
 	}

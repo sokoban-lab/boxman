@@ -310,12 +310,10 @@ public class myStateBrow extends Activity implements myGifMakeFragment.GifMakeSt
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		if (c_Pos >= 0) {
-			switch (item.getItemId()){
-			case 1:  //打开
+			if (item.getItemId() == 1) {  //打开
 				myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				set_State();
-				break;
-			case 2:  //YASS 优化
+			} else if (item.getItemId() == 2) {  //YASS 优化
 				myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				StringBuilder str = new StringBuilder();
 				int len = myMaps.m_State.ans.length();
@@ -338,40 +336,34 @@ public class myStateBrow extends Activity implements myGifMakeFragment.GifMakeSt
 				} else {
 					MyToast.showToast(this, "答案是空的！", Toast.LENGTH_SHORT);
 				}
-				break;
-			case 3:  //导出到文档: XSB+Lurd
+			} else if (item.getItemId() == 3) {  //导出到文档: XSB+Lurd
 				myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				saveAnsToFile(m_Sel_id);
-				break;
-			case 4:  //导出到剪切板: XSB+Lurd
+			} else if (item.getItemId() == 4) {  //导出到剪切板: XSB+Lurd
 				myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				myExport2(m_Sel_id);
-				break;
-			case 5:  //导出到剪切板: Lurd
+			} else if (item.getItemId() == 5) {  //导出到剪切板: Lurd
 				myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				myExport();
-				break;
-			case 6:  //导出到剪切板: 正推 Lurd
+			} else if (item.getItemId() == 6) {  //导出到剪切板: 正推 Lurd
 				myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				myExport3();
-				break;
-			case 7:  //导出到剪切板: 逆推 Lurd
+			} else if (item.getItemId() == 7) {  //导出到剪切板: 逆推 Lurd
 				myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				myExport4();
-				break;
-			case 8:  //注释
+			} else if (item.getItemId() == 8) {  //注释
 				final EditText et = new EditText(this);
 
 				if (g_Pos == 0) {
 					if (myMaps.mState1.get(c_Pos).time.toLowerCase().indexOf("yass") >= 0 || myMaps.mState1.get(c_Pos).time.toLowerCase().indexOf("导入") >= 0) {
 						MyToast.showToast(myStateBrow.this, "只读！", Toast.LENGTH_SHORT);
-						break;
+						return true;
 					}
 					et.setText(myMaps.mState1.get(c_Pos).time);
 				} else {
 					if (myMaps.mState2.get(c_Pos).time.toLowerCase().indexOf("yass") >= 0 || myMaps.mState2.get(c_Pos).time.toLowerCase().indexOf("导入") >= 0) {
 						MyToast.showToast(myStateBrow.this, "只读！", Toast.LENGTH_SHORT);
-						break;
+						return true;
 					}
 					et.setText(myMaps.mState2.get(c_Pos).time);
 				}
@@ -396,21 +388,16 @@ public class myStateBrow extends Activity implements myGifMakeFragment.GifMakeSt
 						})
 						.setNegativeButton("取消", null).setCancelable(false)
 						.show();
-
-				break;
-			case 9:  //删除
+			} else if (item.getItemId() == 9) {  //删除
 				DelDlg.show();
-				break;
-			case 10:  //删除全部状态
+			} else if (item.getItemId() == 10) {  //删除全部状态
 				DelDlgAll.show();
-				break;
-			case 11:  //提交答案
+			} else if (item.getItemId() == 11) {  //提交答案
                 myMaps.m_State = mySQLite.m_SQL.load_State(m_Sel_id);
 				Intent intent2 = new Intent();
 				intent2.setClass(this, mySubmit.class);
 				startActivity(intent2);
-				break;
-			case 12:  //生成 GIF 演示动画
+			} else if (item.getItemId() == 12) {  //生成 GIF 演示动画
 //				MyToast.showToast(myStateBrow.this, "这里不支持标尺与箱子编号！", Toast.LENGTH_SHORT);
 				File targetDir = new File(myMaps.sRoot+myMaps.sPath + "GIF/");
 				if (!targetDir.exists()) targetDir.mkdirs();  //创建自定义GIF文件夹
@@ -497,9 +484,7 @@ public class myStateBrow extends Activity implements myGifMakeFragment.GifMakeSt
                                 }
                             }
                         }).setCancelable(false).show();
-
-                break;
- 			}
+			}
 		}
 		return true;
 	}
@@ -949,19 +934,18 @@ public class myStateBrow extends Activity implements myGifMakeFragment.GifMakeSt
 	}
 
 	public boolean onOptionsItemSelected(MenuItem mt) {
-	    switch (mt.getItemId()) {
 		//菜单栏返回键功能
-		case android.R.id.home:
+	    if (mt.getItemId() == android.R.id.home) {
 			this.finish();
 
 			return true;
-		case R.id.st_ex_all_ans_file:  //导出全部答案到文档
+	    } else if (mt.getItemId() == R.id.st_ex_all_ans_file) {  //导出全部答案到文档
 			saveAnsToFile(-1);
 			return true;
-		case R.id.st_ex_all_ans:  //导出全部答案到剪切板
+	    } else if (mt.getItemId() == R.id.st_ex_all_ans) {  //导出全部答案到剪切板
 			myExport2(-1);
 			return true;
-		case R.id.st_ex_ans_comment:  //导出答案的注释信息
+	    } else if (mt.getItemId() == R.id.st_ex_ans_comment) {  //导出答案的注释信息
 			if (myMaps.m_Sets[30] == 1) {
 				myMaps.m_Sets[30] = 0;
 				mt.setChecked(false);
@@ -970,15 +954,15 @@ public class myStateBrow extends Activity implements myGifMakeFragment.GifMakeSt
 				mt.setChecked(true);
 			}
 			return true;
-		case R.id.st_ex_submit_list:  //比赛答案提交列表
+	    } else if (mt.getItemId() == R.id.st_ex_submit_list) {  //比赛答案提交列表
 			//比赛答案提交列表
 			Intent intent3 = new Intent();
 			intent3.setClass(this, mySubmitList.class);
 			startActivity(intent3);
 			return true;
-       default:
+	    } else {
        		return super.onOptionsItemSelected(mt);
-       }
+	    }
 	}
 }
 

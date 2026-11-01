@@ -433,12 +433,11 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 
 	public boolean onOptionsItemSelected(MenuItem mt) {
 		String msg;
-		switch (mt.getItemId()) {
 			//标题栏返回键功能
-			case android.R.id.home:
+		if (mt.getItemId() == android.R.id.home) {
 				this.finish();
 				return true;
-			case R.id.levels_add:  //创编新的关卡或添加关卡
+		} else if (mt.getItemId() == R.id.levels_add) {  //创编新的关卡或添加关卡
 				if (myMaps.sFile.equals("创编关卡")) {
 					SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd_HHmmss");//设置日期格式
 					final String fn = "NewLevel_"+df.format(new Date())+".XSB";  // new Date()获取当前系统时间
@@ -500,21 +499,21 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 					popupMenu.show();
 				}
 				return true;
-			case R.id.levels_top:  //顶
+		} else if (mt.getItemId() == R.id.levels_top) {  //顶
 				if (myMaps.m_Sets[2] == 0) {
 					mGridView.setSelection(0);
 				} else {
 					mListView.setSelection(0);
 				}
 				return true;
-			case R.id.levels_bottom:  //底
+		} else if (mt.getItemId() == R.id.levels_bottom) {  //底
 				if (myMaps.m_Sets[2] == 0) {
 					mGridView.setSelection(mGridView.getCount()-1);
 				} else {
 					mListView.setSelection(mListView.getCount()-1);
 				}
 				return true;
-			case R.id.levels_goto:
+		} else if (mt.getItemId() == R.id.levels_goto) {
 				View view = View.inflate(this, R.layout.goto_dialog, null);
 				final EditText input_steps = (EditText) view.findViewById(R.id.dialog_steps);  //位置
 				Builder dlg = new Builder(this, AlertDialog.THEME_HOLO_DARK);
@@ -575,7 +574,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 					}
 				}).setCancelable(false).create().show();
 				return true;
-			case R.id.levels_select:  //多选模式
+		} else if (mt.getItemId() == R.id.levels_select) {  //多选模式
 				if (myMaps.isSelect) {
 					myMaps.isSelect = false;
 					mt.setChecked(false);
@@ -588,7 +587,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				setSelectAll();  //设置全选开关状态
 				adapter.notifyDataSetChanged();
 				return true;
-			case R.id.levels_showtitle:  //显示关卡标题
+		} else if (mt.getItemId() == R.id.levels_showtitle) {  //显示关卡标题
 				if (myMaps.m_Sets[2] == 1) {
 					myMaps.m_Sets[2] = 0;
 					mt.setChecked(false);
@@ -607,7 +606,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				recycleBitmapCaches(0, myMaps.m_lstMaps.size());
 				adapter.notifyDataSetChanged();
 				return true;
-			case R.id.levels_showdup:
+		} else if (mt.getItemId() == R.id.levels_showdup) {
 				//标识重复关卡
 				if (myMaps.m_Sets[12] == 1) {
 					myMaps.m_Sets[12] = 0;
@@ -619,7 +618,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				recycleBitmapCaches(0, myMaps.m_lstMaps.size());
 				mGridView.invalidateViews();
 				return true;
-			case R.id.levels_first_nosolved:  //打开首个未解关卡
+		} else if (mt.getItemId() == R.id.levels_first_nosolved) {  //打开首个未解关卡
 				int k = 0;
 				int len = myMaps.m_lstMaps.size();
 				while (k < len && myMaps.m_lstMaps.get(k).Solved) {
@@ -635,7 +634,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 					MyToast.showToast(this, "关卡已经全部解开！", Toast.LENGTH_SHORT);
 				}
 				return true;
-			case R.id.levels_recent:  //打开上次推的关卡
+		} else if (mt.getItemId() == R.id.levels_recent) {  //打开上次推的关卡
 				long m_id = mySQLite.m_SQL.get_Recent(myMaps.m_lstMaps.get(0).P_id);
 
 				int k2 = 0;
@@ -655,7 +654,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				startActivity(intent3);
 
 				return true;
-			case R.id.levels_clear:  //清空列表
+		} else if (mt.getItemId() == R.id.levels_clear) {  //清空列表
 				Builder builder = new Builder(this, AlertDialog.THEME_HOLO_DARK);
 				builder.setTitle("确认")
 						.setMessage("清空列表，确定吗？")
@@ -669,7 +668,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 							}}).setCancelable(false).create().show();
 
 				return true;
-			case R.id.levels_delete_more:  //批量删除
+		} else if (mt.getItemId() == R.id.levels_delete_more) {  //批量删除
 				if (myMaps.m_lstMaps.size() > 0) {
 					View view3 = View.inflate(myGridView.this, R.layout.del_dialog, null);
 					final EditText input1 = (EditText) view3.findViewById(R.id.del_begin);  //开始
@@ -726,7 +725,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 					}).setCancelable(false).create().show();
 				}
 				return true;
-			case R.id.levels_col_count:
+		} else if (mt.getItemId() == R.id.levels_col_count) {
 				if (myMaps.m_Sets[2] != 0) {
 					MyToast.showToast(myGridView.this, "标题模式下无效！", Toast.LENGTH_SHORT);
 					return true;
@@ -769,7 +768,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				}).setPositiveButton("取消", null);
 				builder1.setCancelable(false).show();
 				return true;
-			case R.id.levels_about:
+		} else if (mt.getItemId() == R.id.levels_about) {
 				//关卡集描述
 				Intent intent1 = new Intent();
 
@@ -787,7 +786,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				intent1.setClass(this, myAbout1.class);
 				startActivity(intent1);
 				return true;
-			default:
+		} else {
 				return super.onOptionsItemSelected(mt);
 		}
 	}
@@ -1077,8 +1076,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		switch (item.getItemId()){
-			case 1:  //打开
+		if (item.getItemId() == 1) {  //打开
 				if (myMaps.sFile.equals("相似关卡")) {  //相似关卡的浏览时
 					myMaps.iskinChange = false;
 					myMaps.curMap = myMaps.m_lstMaps.get(m_Num);
@@ -1092,8 +1090,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 					intent1.setClass(this, myGameView.class);
 					startActivity(intent1);
 				}
-				break;
-			case 2:  //改编为新关卡或继续编辑
+		} else if (item.getItemId() == 2) {  //改编为新关卡或继续编辑
 				MyMenu.getItem(10).setVisible(false);
 
 				mapNode nd = myMaps.m_lstMaps.get(m_Num);  //当前长按的关卡
@@ -1138,10 +1135,8 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				Intent intent2 = new Intent();
 				intent2.setClass(this, myEditView.class);
 				startActivity(intent2);
-
-				break;
-			case 3:  //图标锁
-				if (myMaps.m_lstMaps.get(m_Num).P_id < 0) break;  //相似查找中，答案表中的关卡
+		} else if (item.getItemId() == 3) {  //图标锁
+				if (myMaps.m_lstMaps.get(m_Num).P_id < 0) return true;  //相似查找中，答案表中的关卡
 
 				if (myMaps.m_lstMaps.get(m_Num).Lock)
 					myMaps.m_lstMaps.get(m_Num).Lock = false;
@@ -1151,8 +1146,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				mySQLite.m_SQL.Update_L_Lock(myMaps.m_lstMaps.get(m_Num).Level_id, myMaps.m_lstMaps.get(m_Num).Lock ? 1 : 0);
 				adapter.m_changeItem = m_Num;
 				adapter.notifyDataSetChanged();
-				break;
-			case 4:  //迁移关卡到...
+		} else if (item.getItemId() == 4) {  //迁移关卡到...
 				String str;
 				myMaps.mArray.clear();
 				myMaps.curMap = null;
@@ -1223,9 +1217,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 								}
 							}
 						}}}).setNegativeButton("取消", null).setCancelable(false).create().show();
-
-				break;
-			case 5:  //复制关卡到...
+		} else if (item.getItemId() == 5) {  //复制关卡到...
 				String str2;
 				myMaps.mArray.clear();
 				myMaps.curMap = null;
@@ -1289,9 +1281,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 								}
 							}
 						}}}).setNegativeButton("取消", null).setCancelable(false).create().show();
-
-				break;
-			case 6:  //导出...
+		} else if (item.getItemId() == 6) {  //导出...
 				StringBuilder s_XSB = new StringBuilder();  //关卡初态
 				StringBuilder s_Lurd = new StringBuilder();  //Lurd
 
@@ -1322,9 +1312,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 
 				intent3.setClass(this, myExport.class);
 				startActivity(intent3);
-
-				break;
-			case 7:  //移动到...
+		} else if (item.getItemId() == 7) {  //移动到...
 				myMaps.curMap = null;
 				View view = View.inflate(this, R.layout.goto_dialog, null);
 				final EditText input_steps = (EditText) view.findViewById(R.id.dialog_steps);  //位置
@@ -1402,8 +1390,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 						dialog.dismiss();
 					}
 				}).setCancelable(false).create().show();
-				break;
-			case 8:  //前移
+		} else if (item.getItemId() == 8) {  //前移
 				myMaps.curMap = null;
 				myMaps.mArray.clear();
 				boolean flg = true;  //被选中的关卡是否集中在一起
@@ -1437,11 +1424,10 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 					recycleBitmapCaches(myMaps.mArray.get(0).intValue() - 1, myMaps.mArray.get(myMaps.mArray.size() - 1).intValue() + 1);
 					adapter.notifyDataSetChanged();
 				}
-				break;
-			case 9:  //后移
+		} else if (item.getItemId() == 9) {  //后移
 				myMaps.curMap = null;
 				myMaps.mArray.clear();
-				flg = true;  //被选中的关卡是否集中在一起
+				boolean flg = true;  //被选中的关卡是否集中在一起
 				if (myMaps.isSelect && myMaps.m_lstMaps.get(m_Num).Select) {  //多选模式下，长按被选中的关卡，多关卡迁动
 					for (int k = myMaps.m_lstMaps.size()-1; k >= 0; k--) {
 						if (myMaps.m_lstMaps.get(k).Select) {
@@ -1454,6 +1440,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				} else {  //单关卡移动
 					myMaps.mArray.add(m_Num);  //但关卡时，flg 默认为集中状态
 				}
+				int toNum, p;
 				if (!flg) {  //关卡多且分散
 					toNum = myMaps.mArray.get(0).intValue()-1;
 					p = 1;
@@ -1471,8 +1458,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 					recycleBitmapCaches(myMaps.mArray.get(myMaps.mArray.size()-1).intValue(), myMaps.mArray.get(0).intValue() + 2);
 					adapter.notifyDataSetChanged();
 				}
-				break;
-			case 10:  //删除
+		} else if (item.getItemId() == 10) {  //删除
 				String str3;
 				myMaps.mArray.clear();
 				if (myMaps.isSelect && myMaps.m_lstMaps.get(m_Num).Select) {  //多选模式下，长按被选中的关卡，多关卡迁移
@@ -1510,9 +1496,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 								my_SetTitle();
 
 							}}).create().show();
-
-				break;
-			case 11:  //查找相似关卡
+		} else if (item.getItemId() == 11) {  //查找相似关卡
 				//需参照：myFindView.myCompare()中的定义
 				final String[] m_menu4 = {  //相似度
 						"100",
@@ -1624,9 +1608,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 						}
 					}});
 				builder4.setCancelable(false).show();
-
-				break;
-			case 12:  //连续选择...
+		} else if (item.getItemId() == 12) {  //连续选择...
 				final EditText et = new EditText(this);
 				et.setKeyListener(getNumber);
 
@@ -1663,9 +1645,7 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 						})
 						.setNegativeButton("取消", null).setCancelable(false)
 						.show();
-
-				break;
-			case 13:  //反选
+		} else if (item.getItemId() == 13) {  //反选
 				for (int k = 0; k < myMaps.m_lstMaps.size (); k++) {
 					myMaps.m_lstMaps.get(k).Select = !myMaps.m_lstMaps.get(k).Select;
 				}
@@ -1676,15 +1656,13 @@ public class myGridView extends Activity implements OnScrollListener, myFindFrag
 				}
 				setSelectAll();  //设置全选开关状态
 				adapter.notifyDataSetChanged();
-				break;
-			case 14:  //详细
+		} else if (item.getItemId() == 14) {  //详细
 				myMaps.iskinChange = false;
 				myMaps.curMap = myMaps.m_lstMaps.get(m_Num);
 				//显示关卡的备注信息
 				Intent intent = new Intent();
 				intent.setClass(myGridView.this, myAbout2.class);
 				startActivity(intent);
-				break;
 		}
 		return true;
 	}

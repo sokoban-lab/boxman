@@ -341,12 +341,11 @@ public class myExport extends Activity implements myGifMakeFragment.GifMakeStatu
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem mt) {
-		switch (mt.getItemId()) {
 			//菜单栏返回键功能
-			case android.R.id.home:
+		if (mt.getItemId() == android.R.id.home) {
 				this.finish();
 				return true;
-			case R.id.exp_gif_make:  //导出为动画
+		} else if (mt.getItemId() == R.id.exp_gif_make) {  //导出为动画
 				int n = my_Lurd.indexOf ('\n');
 				if (n >= 0) m_Act = my_Lurd.substring(0, n);
 				else {
@@ -447,7 +446,7 @@ public class myExport extends Activity implements myGifMakeFragment.GifMakeStatu
 						}).setCancelable(false).show();
 
 				return true;
-			default:
+		} else {
 				return super.onOptionsItemSelected(mt);
 		}
 	}

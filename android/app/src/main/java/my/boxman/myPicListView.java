@@ -135,12 +135,11 @@ public class myPicListView extends Activity implements OnScrollListener {
 	}
 
     public boolean onOptionsItemSelected(MenuItem mt) {
-		switch (mt.getItemId()) {
 			//标题栏返回键功能
-			case android.R.id.home:
+		if (mt.getItemId() == android.R.id.home) {
 				this.finish();
 				return true;
-			case R.id.pic_path:  // 浏览位置
+		} else if (mt.getItemId() == R.id.pic_path) {  // 浏览位置
 				final String[] m_menu = new String[] {
 					"快手默认位置",
 					"QQ 图片接收文件夹",
@@ -185,7 +184,7 @@ public class myPicListView extends Activity implements OnScrollListener {
 				builder.setCancelable(false).show();
 
 				return true;
-			default:
+		} else {
 				return super.onOptionsItemSelected(mt);
 		}
 	}

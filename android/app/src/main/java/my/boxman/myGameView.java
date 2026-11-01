@@ -3386,8 +3386,7 @@ public class myGameView extends Activity {
 
     public boolean onOptionsItemSelected(MenuItem mt) {
 
-        switch (mt.getItemId()) {
-            case R.id.player_help:  //操作说明
+        if (mt.getItemId() == R.id.player_help) {  //操作说明
                 Intent intent0 = new Intent(this, Help.class);
                 //用Bundle携带数据
                 Bundle bundle0 = new Bundle();
@@ -3396,15 +3395,11 @@ public class myGameView extends Activity {
 
                 intent0.setClass(this, Help.class);
                 startActivity(intent0);
-
-                break;
-            case R.id.player_about:  //关卡描述
+        } else if (mt.getItemId() == R.id.player_about) {  //关卡描述
                 Intent intent = new Intent();
                 intent.setClass(myGameView.this, myAbout2.class);
                 startActivity(intent);
-
-                break;
-            case R.id.player_IN:  //导入
+        } else if (mt.getItemId() == R.id.player_IN) {  //导入
                 setACT(false);  //非录制模式
 
                 myMaps.m_ActionIsRedy = false;
@@ -3423,9 +3418,7 @@ public class myGameView extends Activity {
 
                 intent2.setClass(myGameView.this, myActGMView.class);
                 startActivity(intent2);
-
-                break;
-            case R.id.player_load:  //打开状态
+        } else if (mt.getItemId() == R.id.player_load) {  //打开状态
                 if (myMaps.isMacroDebug) {
                     final CheckBox isBack = new CheckBox(this);
                     isBack.setText("关卡回到该“宏”打开前的状态");
@@ -3445,9 +3438,7 @@ public class myGameView extends Activity {
                             .setNegativeButton("取消", null).setCancelable(false)
                             .show();
                 } else myOpenState();  //启动打开状态对话框
-
-                break;
-            case R.id.player_save:  //保存状态
+        } else if (mt.getItemId() == R.id.player_save) {  //保存状态
                 if (m_lstMovUnDo.size() > 0 || m_lstMovUnDo2.size() > 0) {
                     if ((myMaps.m_Sets[13] == 0 || m_iStep[2] <= 0) && m_nGoals_OK == m_nGoals && m_iStep[0] > 0 && myMaps.curMap.Level_id > 0)  //箱子 == 目标 && 动过箱子，非试推状态
                         saveAns(1);
@@ -3456,9 +3447,7 @@ public class myGameView extends Activity {
                 } else {
                     MyToast.showToast(this, "没什么可保存的！", Toast.LENGTH_SHORT);
                 }
-
-                break;
-            case R.id.player_ReStart:  //重新开始
+        } else if (mt.getItemId() == R.id.player_ReStart) {  //重新开始
                 Builder builder0 = new Builder(myGameView.this);
                 builder0.setMessage("重新开始，确定吗？").setNegativeButton("取消", null)
                         .setPositiveButton("确定", new OnClickListener() {
@@ -3486,9 +3475,7 @@ public class myGameView extends Activity {
                             }
                         });
                 builder0.setCancelable(false).show();
-
-                break;
-            case R.id.player_Home:  //后退至首
+        } else if (mt.getItemId() == R.id.player_Home) {  //后退至首
                 m_bYanshi = false;
                 m_bYanshi2 = false;
                 if (bt_BK.isChecked()) {  //逆推
@@ -3508,9 +3495,7 @@ public class myGameView extends Activity {
                         UpData2(1);
                     }
                 }
-
-                break;
-            case R.id.player_End:  //前进至尾
+        } else if (mt.getItemId() == R.id.player_End) {  //前进至尾
                 m_bYanshi = false;
                 m_bYanshi2 = false;
                 if (bt_BK.isChecked()) {  //逆推
@@ -3533,16 +3518,13 @@ public class myGameView extends Activity {
                         UpData1(1);
                     }
                 }
-
-                break;
-            case R.id.player_Yass_Solver:  //YASS求解
+        } else if (mt.getItemId() == R.id.player_Yass_Solver) {  //YASS求解
                 if (!bt_BK.isChecked()) {
                     mySolution(0);  //YASS求解
                 } else {
                     MyToast.showToast(this, "逆推时，无此功能！", Toast.LENGTH_SHORT);
                 }
 
-                break;
 //            case R.id.player_Festival_Solver:  //Festival求解
 //                if (!bt_BK.isChecked()) {
 //                    mySolution(1);  //Festival求解
@@ -3551,7 +3533,7 @@ public class myGameView extends Activity {
 //                }
 //
 //                break;
-            case R.id.player_Setup1:  //场景设置
+        } else if (mt.getItemId() == R.id.player_Setup1) {  //场景设置
                 String[] m_menu2 = {
                         "速度设置",
                         "更换皮肤",
@@ -3682,9 +3664,7 @@ public class myGameView extends Activity {
                     }
                 });
                 builder2.setCancelable(false).show();
-
-                break;
-            case R.id.player_Setup2:  //开关选项
+        } else if (mt.getItemId() == R.id.player_Setup2) {  //开关选项
                 final String[] m_menu = {
                         "双击箱子编号",
                         "自动箱子编号",
@@ -3938,9 +3918,7 @@ public class myGameView extends Activity {
                     }
                 });
                 builder.setCancelable(false).show();
-
-                break;
-            case R.id.player_EX:  //导出
+        } else if (mt.getItemId() == R.id.player_EX) {  //导出
                 StringBuilder s_XSB = new StringBuilder();  //关卡初态
                 StringBuilder s_XSB1 = new StringBuilder();  //关卡正推现场
                 StringBuilder s_XSB8 = new StringBuilder();  //关卡正推现场 -- 旋转
@@ -4153,9 +4131,7 @@ public class myGameView extends Activity {
 
                 intent3.setClass(myGameView.this, myExport.class);
                 startActivity(intent3);
-
-                break;
-            case R.id.player_exit:  //退出
+        } else if (mt.getItemId() == R.id.player_exit) {  //退出
                 MyToast.showToast(myGameView.this, "可以离开了！", Toast.LENGTH_SHORT);
                 StopMicro();  //停止“宏”功能运行
 
@@ -4178,8 +4154,6 @@ public class myGameView extends Activity {
                     myStop();
                     finish();
                 }
-
-                break;
         }
         return super.onOptionsItemSelected(mt);
     }

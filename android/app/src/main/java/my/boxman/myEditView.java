@@ -484,16 +484,15 @@ public class myEditView extends Activity {
     }
 
     public boolean onOptionsItemSelected(MenuItem mt) {
-        switch (mt.getItemId()) {
-            case R.id.edit_import:  //导入--XSB/Lurd -- 剪切板
+        if (mt.getItemId() == R.id.edit_import) {  //导入--XSB/Lurd -- 剪切板
                 myImport();  //从剪切板导入 XSB 到 myMaps.curMap
                 bt_UnDo.setEnabled(false);
                 bt_ReDo.setEnabled(false);
                 return true;
-            case R.id.edit_export:  //导出--XSB--剪切板
+        } else if (mt.getItemId() == R.id.edit_export) {  //导出--XSB--剪切板
                 myExport();
                 return true;
-            case R.id.edit_setup:  //设置
+        } else if (mt.getItemId() == R.id.edit_setup) {  //设置
                 String[] m_menu = {
                         "YASC绘制习惯",
                         "系统导航键"
@@ -529,10 +528,10 @@ public class myEditView extends Activity {
                 builder2.setCancelable(false).show();
 
                 return true;
-            case R.id.edit_block_save:  //区块另存为...
+        } else if (mt.getItemId() == R.id.edit_block_save) {  //区块另存为...
                 myBlockSave(m_cArray);
                 return true;
-            case R.id.edit_complete:  //提交
+        } else if (mt.getItemId() == R.id.edit_complete) {  //提交
                 if (bt_Save.isEnabled()) {  //试推前，若需保存
                     if (saveFile(myMaps.curMap.fileName)) {
                         MyToast.showToast(myEditView.this, "关卡已保存！", Toast.LENGTH_LONG);
@@ -597,7 +596,7 @@ public class myEditView extends Activity {
                 }).setNegativeButton("取消", null);
                 builder.setCancelable(false).show();
                 return true;
-            case R.id.edit_play:  //试推
+        } else if (mt.getItemId() == R.id.edit_play) {  //试推
                 if (bt_Save.isEnabled()) {  //试推前，若需保存
                     if (saveFile(myMaps.curMap.fileName)) {
                         MyToast.showToast(myEditView.this, "关卡已保存！", Toast.LENGTH_LONG);
@@ -624,7 +623,7 @@ public class myEditView extends Activity {
                     MyToast.showToast(this, "请检查关卡是否规范！", Toast.LENGTH_SHORT);
                 }
                 return true;
-            case R.id.edit_normalize:  //关卡标准化
+        } else if (mt.getItemId() == R.id.edit_normalize) {  //关卡标准化
                 ndAct = null;
                 ndAct = new ActNode(m_cArray, mMap.m_nMapLeft, mMap.m_nMapRight, mMap.m_nMapTop, mMap.m_nMapBottom, -1, -1, mMap.mMatrix, mMap.mCurrentMatrix, null, null);
                 ndAct.Act(9);
@@ -639,7 +638,7 @@ public class myEditView extends Activity {
                 bt_Save.setEnabled(true);
 
                 return true;
-            case R.id.edit_clear:  //清空地图
+        } else if (mt.getItemId() == R.id.edit_clear) {  //清空地图
                 Builder dlg0 = new Builder(this, AlertDialog.THEME_HOLO_DARK);
                 dlg0.setCancelable(false).setTitle("确认").setMessage("地图将被清空，确定吗？").setNegativeButton("取消", null);
                 dlg0.setPositiveButton("确定", new OnClickListener() {
@@ -667,7 +666,7 @@ public class myEditView extends Activity {
                     }
                 }).create().show();
                 return true;
-            case R.id.edit_resize:  //改变关卡尺寸
+        } else if (mt.getItemId() == R.id.edit_resize) {  //改变关卡尺寸
                 ndAct = null;
                 ndAct = new ActNode(m_cArray, mMap.m_nMapLeft, mMap.m_nMapRight, mMap.m_nMapTop, mMap.m_nMapBottom, -1, -1, mMap.mMatrix, mMap.mCurrentMatrix, null, null);
                 ndAct.Act(4);
@@ -793,7 +792,7 @@ public class myEditView extends Activity {
                 }).create().show();
 
                 return true;
-            case R.id.edit_help:  //操作说明
+        } else if (mt.getItemId() == R.id.edit_help) {  //操作说明
                 Intent intent0 = new Intent(this, Help.class);
                 //用Bundle携带数据
                 Bundle bundle0 = new Bundle();
@@ -804,13 +803,13 @@ public class myEditView extends Activity {
                 startActivity(intent0);
 
                 return true;
-            case R.id.edit_exit:  //离开
+        } else if (mt.getItemId() == R.id.edit_exit) {  //离开
                 MyToast.showToast(myEditView.this, "离开！", Toast.LENGTH_SHORT);
                 if (!bt_Save.isEnabled()) finish();
                 else exitDlg.show();  //做过编辑修改，提示保存
 
                 return true;
-            case R.id.edit_inf:  //关卡作者、标题、说明等资料编辑
+        } else if (mt.getItemId() == R.id.edit_inf) {  //关卡作者、标题、说明等资料编辑
                 if (myMaps.curMap.Map == null) {
                     MyToast.showToast(myEditView.this, "做好关卡保存后才可以哦！", Toast.LENGTH_SHORT);
                 } else {
@@ -820,7 +819,7 @@ public class myEditView extends Activity {
                     startActivity(intent);
                 }
                 return true;
-            case R.id.edit_rule:  //设置标尺
+        } else if (mt.getItemId() == R.id.edit_rule) {  //设置标尺
                 View view2 = View.inflate(this, R.layout.rule_dialog, null);
                 final SeekBar input_color = (SeekBar) view2.findViewById(R.id.dialog_rule_color);  //标尺字体颜色 -- 仅灰度变化就够用了
                 final EditText et1 = (EditText) view2.findViewById(R.id.dialog_rule_color1);       //颜色示例1
@@ -890,7 +889,7 @@ public class myEditView extends Activity {
                     }
                 }).setCancelable(false).create().show();
                 return true;
-            default:
+        } else {
                 return super.onOptionsItemSelected(mt);
         }
     }

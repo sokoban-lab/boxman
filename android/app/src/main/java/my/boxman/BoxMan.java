@@ -411,17 +411,16 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 	};
 
 	public boolean onOptionsItemSelected(MenuItem mt) {
-		switch (mt.getItemId()) {
-			case R.id.menu_set:  //导入
+		if (mt.getItemId() == R.id.menu_set) {  //导入
 				myMaps.m_Set_id = -1;  //需要创建新的关卡集
 				sel_Set();
 
 				return true;
-			case R.id.menu_exp_ans:  //导出
+		} else if (mt.getItemId() == R.id.menu_exp_ans) {  //导出
 				sel_Set2();
 
 				return true;
-			case R.id.menu_NewSet:  //增设新的关卡集...
+		} else if (mt.getItemId() == R.id.menu_NewSet) {  //增设新的关卡集...
 				final EditText et = new EditText(this);
 				et.setText(myMaps.getNewSetName());
 				et.setMaxLines(1);
@@ -503,7 +502,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 						.setNegativeButton("取消", null)
 						.show();
 				return true;
-			case R.id.menu_builder:
+		} else if (mt.getItemId() == R.id.menu_builder) {
 				//确保关卡集进入一次 （点击太快，可能进入两次）
 				if (myMaps.curJi) return true;
 				myMaps.curJi = true;
@@ -517,7 +516,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 				startActivity(intent0);
 
 				return true;
-			case R.id.menu_recent:  //最近推过的关卡
+		} else if (mt.getItemId() == R.id.menu_recent) {  //最近推过的关卡
 				//确保关卡集进入一次 （点击太快，可能进入两次）
 				if (myMaps.curJi) return true;
 				myMaps.curJi = true;
@@ -542,7 +541,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 					startActivity(intent1);
 				}
 				return true;
-			case R.id.menu_query:  //关卡查询
+		} else if (mt.getItemId() == R.id.menu_query) {  //关卡查询
 				View view = View.inflate(this, R.layout.query_dialog, null);
 				final CheckBox m_All = (CheckBox) view.findViewById(R.id.query_all);      //全选
 				final CheckBox m_Ans = (CheckBox) view.findViewById(R.id.query_ans);      //搜索答案库
@@ -679,21 +678,21 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 					}
 				}).setCancelable(false).create().show();
 				return true;
-			case R.id.menu_submit_list:
+		} else if (mt.getItemId() == R.id.menu_submit_list) {
 				//比赛答案提交列表
 				Intent intent3 = new Intent();
 				intent3.setClass(this, mySubmitList.class);
 				startActivity(intent3);
 
 				return true;
-			case R.id.menu_recog:
+		} else if (mt.getItemId() == R.id.menu_recog) {
 				myMaps.edPicList(myMaps.sRoot + myMaps.myPathList[myMaps.m_Sets[36]]);
 				Intent intent4 = new Intent();
 				intent4.setClass(this, myPicListView.class);
 				startActivity(intent4);
 
 				return true;
-			case R.id.menu_help:
+		} else if (mt.getItemId() == R.id.menu_help) {
 				//帮助
 				Intent intent1 = new Intent(this, Help.class);
 				//用Bundle携带数据
@@ -709,7 +708,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 //				startActivity(intent1);
 
 				return true;
-			case R.id.menu_about:
+		} else if (mt.getItemId() == R.id.menu_about) {
 //			if (mySQLite.m_SQL.exp_Inf_ALL())
 //				MyToast.showToast(BoxMan.this, "导出成功！", Toast.LENGTH_SHORT);
 				//关于
@@ -718,7 +717,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 				startActivity(intent2);
 
 				return true;
-			default:
+		} else {
 				return super.onOptionsItemSelected(mt);
 		}
 	}
@@ -1535,11 +1534,9 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		switch (item.getItemId()){
-			case 1:  //打开
+		if (item.getItemId() == 1) {  //打开
 				browLevels(groupPos, childPos);
-				break;
-			case 2:  //导出
+		} else if (item.getItemId() == 2) {  //导出
 				if (childPos > -1){
 //					andAns = false;
 					myMaps.isLurd = false;
@@ -1597,8 +1594,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 						}
 					}).create().show();
 				}
-				break;
-			case 3:  //清理集内关卡状态
+		} else if (item.getItemId() == 3) {  //清理集内关卡状态
 				new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK).setTitle("状态清理").setCancelable(false)
 						.setMessage("本集关卡保存的全部状态将被清理，确认吗？")
 						.setPositiveButton("确定", new OnClickListener() {
@@ -1622,8 +1618,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 							}})
 						.setNegativeButton("取消", null)
 						.show();
-				break;
-            case 4:  // 删除关卡集的答案
+		} else if (item.getItemId() == 4) {  // 删除关卡集的答案
                 new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK)
                         .setTitle("提醒")
                         .setMessage("本集关卡的答案将全部删除，\n请做好备份！\n确定要删除答案吗？")
@@ -1637,11 +1632,9 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
                                 new Thread(new delete2Thread()).start();
                                 dialog.show();
                             }}).create().show();
-                break;
-			case 5:
+		} else if (item.getItemId() == 5) {
 				reName();   //重命名
-				break;
-			case 6:  // 删除关卡集
+		} else if (item.getItemId() == 6) {  // 删除关卡集
                 new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK)
                         .setTitle("提醒").setMessage("删除关卡集，确定吗？\n（" + myMaps.mSets3.get(childPos).title+")")
                         .setCancelable(false).setNegativeButton("取消", null)
@@ -1654,16 +1647,13 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
                                 new Thread(new deleteThread()).start();
                                 dialog.show();
                             }}).create().show();
-                break;
-            case 7:  //导入关卡（文档）
+		} else if (item.getItemId() == 7) {  //导入关卡（文档）
                 myMaps.m_Set_id = myMaps.mSets3.get(childPos).id;
                 sel_File();
-                break;
-            case 8:  //导入关卡（剪切板）
+		} else if (item.getItemId() == 8) {  //导入关卡（剪切板）
                 myMaps.m_Set_id = myMaps.mSets3.get(childPos).id;
                 read_Plate();
-                break;
-            case 9:  //导入比赛关卡
+		} else if (item.getItemId() == 9) {  //导入比赛关卡
 				View view = View.inflate(this, R.layout.get_uil_dialog, null);
 				final EditText input_uil = (EditText) view.findViewById(R.id.dialog_uil);
 				final EditText input_num = (EditText) view.findViewById(R.id.dialog_num2);
@@ -1745,9 +1735,7 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 						dialog.show();
 					}
 				}).setCancelable(false).create().show();
-
-                break;
-			case 10:  // 详细 == 关卡集的“关于...”
+		} else if (item.getItemId() == 10) {  // 详细 == 关卡集的“关于...”
 				long m_id = -1;
 				String msg;
 				switch (groupPos){
@@ -1779,7 +1767,6 @@ public class BoxMan extends Activity implements mySplitLevelsFragment.SplitStatu
 
 				intent1.setClass(this, myAbout1.class);
 				startActivity(intent1);
-				break;
 		}
 		return true;
 	}

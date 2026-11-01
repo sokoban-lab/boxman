@@ -704,13 +704,12 @@ public class myRecogView extends Activity {
     }
 
     public boolean onOptionsItemSelected(MenuItem mt) {
-        switch (mt.getItemId()) {
             //菜单栏返回键功能
-            case android.R.id.home:
+        if (mt.getItemId() == android.R.id.home) {
                 if (mMap.m_nCols < 3 || mMap.m_nRows < 3) finish();
                 else exitDlg.show();  //有过识别动作，提示保存
                 return true;
-            case R.id.recog_about:  // 关于
+        } else if (mt.getItemId() == R.id.recog_about) {  // 关于
                 Intent intent0 = new Intent(this, Help.class);
                 //用Bundle携带数据
                 Bundle bundle0 = new Bundle();
@@ -721,7 +720,7 @@ public class myRecogView extends Activity {
                 startActivity(intent0);
 
                 return true;
-            case R.id.recog_shrink:  // 减少格子数
+        } else if (mt.getItemId() == R.id.recog_shrink) {  // 减少格子数
                 mMap.cur_Rect.top = -1;  // 取消焦点框
                 if (mMap.m_nRows > 3 && mMap.m_nCols > 3) {
                     mMap.m_nCols--;
@@ -730,7 +729,7 @@ public class myRecogView extends Activity {
                     mMap.m_nRows = (int) ((mMap.m_nMapBottom - mMap.m_nMapTop + 1) / mMap.m_nWidth);
                 }
                 return true;
-            case R.id.recog_extend:  // 增加格子数
+        } else if (mt.getItemId() == R.id.recog_extend) {  // 增加格子数
                 mMap.cur_Rect.top = -1;  // 取消焦点框
                 mMap.m_nWidth = (float) (mMap.m_nMapRight - mMap.m_nMapLeft + 1) / mMap.m_nCols;
                 if (mMap.m_nCols < 100 && (int)mMap.m_nWidth > 8) {
@@ -740,11 +739,11 @@ public class myRecogView extends Activity {
                     mMap.m_nRows = (int) ((mMap.m_nMapBottom - mMap.m_nMapTop + 1) / mMap.m_nWidth);
                 }
                 return true;
-            case R.id.recog_restore:  // 取消本次识别
+        } else if (mt.getItemId() == R.id.recog_restore) {  // 取消本次识别
                 myRestore();
                 mMap.invalidate();
                 return true;
-            case R.id.recog_similarity:  // 设置相似度
+        } else if (mt.getItemId() == R.id.recog_similarity) {  // 设置相似度
                 View view3 = View.inflate(this, R.layout.recog_dialog, null);
                 final RadioGroup rg = (RadioGroup) view3.findViewById(R.id.recog_similarity);  //相似度
                 final RadioButton rb5 = (RadioButton) view3.findViewById(R.id.rb_5);
@@ -775,7 +774,7 @@ public class myRecogView extends Activity {
                 });
                 dlg2.setTitle("识别设置").setPositiveButton("确定", null).setCancelable(false).create().show();
                 return true;
-            case R.id.recog_complete:  // 开始识别
+        } else if (mt.getItemId() == R.id.recog_complete) {  // 开始识别
                 setColor(-1);  // 取消底行 XSB 元素高亮
                 if (mt.getTitle().equals("识别")) {
                     mt.setTitle("编辑");
@@ -785,7 +784,7 @@ public class myRecogView extends Activity {
                     mMap.isRecog = true;
                 }
                  return true;
-            default:
+        } else {
                 return super.onOptionsItemSelected(mt);
         }
     }
