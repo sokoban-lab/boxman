@@ -253,7 +253,7 @@ public class myGameViewMap extends View {
             //单触点，不滑动，略延迟触发
             public void onShowPress(MotionEvent e) {
                 if (m_lShowAnsInf) m_lShowAnsInf = false; //有了动作后，自动关闭答案信息的显示
-                m_Game.m_bNetLock = false;  //取消网型提示
+                m_Game.state.m_bNetLock = false;  //取消网型提示
                 if (m_rUnDo.contains((int) e.getX(), (int) e.getY())) {
                     curButton = 1;  //启动悬停按钮的拖动
                     mMode = MODE_DRAG;
@@ -269,7 +269,7 @@ public class myGameViewMap extends View {
                 if (m_lShowAnsInf) m_lShowAnsInf = false; //有了动作后，自动关闭答案信息的显示
                 //触发长按
                 if (m_Game.bt_Sel.isChecked()) return;  //计数状态，直接返回
-                m_Game.m_bNetLock = false;  //取消网型提示
+                m_Game.state.m_bNetLock = false;  //取消网型提示
                 m_bManTo = false;  //关闭人的可达点状态
                 m_bManTo2 = false;
                 m_bBoxTo = false;  //关闭箱子可达位置提示状态状态
@@ -280,20 +280,20 @@ public class myGameViewMap extends View {
                 m_boxCanCome2 = false;
                 m_boxCanMove = false;  //关闭可动箱子提示状态
                 m_boxCanMove2 = false;
-                m_Game.m_bACT_ERROR = false;  //执行动作时是否遇到错误
+                m_Game.state.m_bACT_ERROR = false;  //执行动作时是否遇到错误
                 if (m_nArenaTop <= 0 && m_rUnDo.contains((int) e.getX(), (int) e.getY())) {  //长按 undo
-                    m_Game.m_bNetLock = false;  //取消网型提示
+                    m_Game.state.m_bNetLock = false;  //取消网型提示
                     m_Game.DoEvent(3);  //undo
                 } else if (m_nArenaTop <= 0 && m_rReDo.contains((int) e.getX(), (int) e.getY())) {  //长按redo
-                    m_Game.m_bNetLock = false;  //取消网型提示
+                    m_Game.state.m_bNetLock = false;  //取消网型提示
                     m_Game.DoEvent(4);  //redo
                 } else if (m_rTrans.contains((int) e.getX(), (int) e.getY())) {
                     m_Game.DoEvent(12);  //“奇偶格位显示”开关
                 } else if (m_rProgress_Bar.contains((int) e.getX(), (int) e.getY())) {  //“互动双推”模式转换
                     if (m_Game.mMicroTask != null) return;
-                    m_Game.m_nStep = 0;
-                    m_Game.m_bYanshi = false;
-                    m_Game.m_bYanshi2 = false;
+                    m_Game.state.m_nStep = 0;
+                    m_Game.state.m_bYanshi = false;
+                    m_Game.state.m_bYanshi2 = false;
                     m_Game.DoEvent(0);   //“互动双推”模式转换
                 } else if (m_rNext_Speed.contains((int) e.getX(), (int) e.getY())) {  //“自动箱子编号”开关
                     myMaps.m_bBianhao = !myMaps.m_bBianhao;
@@ -305,25 +305,25 @@ public class myGameViewMap extends View {
                     invalidate();
                 } else if (!m_Game.bt_BK.isChecked() && (mClickObj == '*' || myMaps.m_Sets[3] == 1 && mClickObj == '.')) {  //长按点位上箱子，显示关联网点、网口
                     if (myMaps.m_Sets[13] == 0) {     // 需要在非“互动双推”模式下
-                        m_Game.m_Net_Inf(m_Game.m_cArray, m_iR, m_iC);  //计算网点、网口
-                        m_Game.m_bNetLock = true;
+                        m_Game.state.netInfo(m_Game.state.m_cArray, m_iR, m_iC);  //计算网点、网口
+                        m_Game.state.m_bNetLock = true;
                     } else {
                         MyToast.showToast(m_Game, "请关闭“互动双推”模式再试！", Toast.LENGTH_SHORT);
                     }
                 } else  if (mClickObj == '$') {  //长按非点位上的箱子，显示哪些箱子可以被推动
                     if (m_Game.mMicroTask != null) return;
-                    if (m_Game.bt_BK.isChecked() && m_Game.m_nRow0 < 0) return;  //逆推的仓管员尚未定位时，不计算
+                    if (m_Game.bt_BK.isChecked() && m_Game.state.m_nRow0 < 0) return;  //逆推的仓管员尚未定位时，不计算
                     if (m_Game.bt_BK.isChecked()) {
-                        m_Game.mPathfinder.manReachable(true, m_Game.bk_cArray, m_Game.m_nRow2, m_Game.m_nCol2);
+                        m_Game.state.mPathfinder.manReachable(true, m_Game.state.bk_cArray, m_Game.state.m_nRow2, m_Game.state.m_nCol2);
                     } else {
-                        m_Game.mPathfinder.manReachable(false, m_Game.m_cArray, m_Game.m_nRow, m_Game.m_nCol);
+                        m_Game.state.mPathfinder.manReachable(false, m_Game.state.m_cArray, m_Game.state.m_nRow, m_Game.state.m_nCol);
                     }
                     m_bManTo = false;  //关闭人的可达点状态
                     m_bManTo2 = false;
                     m_Game.boxCanMove();
                 } else if (mClickObj == '-' || mClickObj == '.' && (myMaps.m_Sets[3] == 0 || m_Game.bt_BK.isChecked())) {  //长按空地，显示哪些箱子可以到这里
                     if (m_Game.mMicroTask != null) return;
-                    if (m_Game.bt_BK.isChecked() && m_Game.m_nRow0 < 0) return; //当尚未指定人的位置时，返回
+                    if (m_Game.bt_BK.isChecked() && m_Game.state.m_nRow0 < 0) return; //当尚未指定人的位置时，返回
                     m_iR2 = m_iR;
                     m_iC2 = m_iC;
                     m_Game.boxCanCome(m_iR, m_iC);
@@ -341,7 +341,7 @@ public class myGameViewMap extends View {
                             MyToast.showToast(m_Game, "使用正推目标点！", Toast.LENGTH_SHORT);
                         }
                     } else {
-                        if (m_Game.m_iStep[1] == 0) {  // 在关卡初态，即尚未任何动作
+                        if (m_Game.state.m_iStep[1] == 0) {  // 在关卡初态，即尚未任何动作
                             if (myMaps.m_Sets[37] == 1) {
                                 myMaps.m_Sets[37] = 0;
                                 MyToast.showToast(m_Game, "自动加载最新状态 -- 关！", Toast.LENGTH_SHORT);
@@ -350,8 +350,8 @@ public class myGameViewMap extends View {
                                 MyToast.showToast(m_Game, "自动加载最新状态 -- 开！", Toast.LENGTH_SHORT);
                             }
                         } else {
-                            if (m_Game.m_Gif_Start == m_Game.m_iStep[1]) m_Game.m_Gif_Start = 0;
-                            else m_Game.m_Gif_Start = m_Game.m_iStep[1];
+                            if (m_Game.state.m_Gif_Start == m_Game.state.m_iStep[1]) m_Game.state.m_Gif_Start = 0;
+                            else m_Game.state.m_Gif_Start = m_Game.state.m_iStep[1];
                         }
                     }
                 } else if (mClickObj == '#') {  //长按墙壁，显示哪些箱子没有动过
@@ -359,7 +359,7 @@ public class myGameViewMap extends View {
                     if (!m_Game.bt_Sel.isChecked()) {
                         if (m_Game.bt_BK.isChecked()) {  //是否做逆推的双目标点提示
                             if (myMaps.m_Sets[32] == 1) m_lShowDst2 = !m_lShowDst2;
-                        } else if (myMaps.curMap.Num > 0 && myMaps.mState2.size() > 0 && m_Game.m_iStep[1] == 0) {
+                        } else if (myMaps.curMap.Num > 0 && myMaps.mState2.size() > 0 && m_Game.state.m_iStep[1] == 0) {
                             m_lShowAnsInf = !m_lShowAnsInf;  //是否允许在开始推关卡之前显示答案信息
                             invalidate();
                         } else m_Game.boxNoMoved();
@@ -370,8 +370,8 @@ public class myGameViewMap extends View {
 
             public boolean onDoubleTap(MotionEvent e) {
                 if (m_lShowAnsInf) m_lShowAnsInf = false; //有了动作后，自动关闭答案信息的显示
-                m_Game.m_bNetLock = false;  //取消网型提示
-                m_Game.m_bACT_ERROR = false;  //执行动作时是否遇到错误
+                m_Game.state.m_bNetLock = false;  //取消网型提示
+                m_Game.state.m_bACT_ERROR = false;  //执行动作时是否遇到错误
                 //当手指快速第二次按下触发,此时必须是单指模式才允许执行doubleTap
                 if (mMode == MODE_DRAG &&
                         Math.abs(e.getRawX() - mClickPoint.x) < 50f &&  //双击范围控制
@@ -385,12 +385,12 @@ public class myGameViewMap extends View {
                     if (mClickObj == '$' || mClickObj == '*') {  //箱子编号
                         if (myMaps.m_bBianhao) {  //自动箱子编号状态打开时，不使用人工箱子编号
                         } else if (myMaps.m_Sets[41] == 1) {  //箱子使用人工编号{  //箱子使用人工编号
-                            if (m_Game.m_iBoxNum[m_iR][m_iC] < 0) {
+                            if (m_Game.state.m_iBoxNum[m_iR][m_iC] < 0) {
                                 for (short k = 0; k < 286; k++) {
                                     flg = false;
                                     for (int i = 0; i < myMaps.curMap.Rows; i++) {
                                         for (int j = 0; j < myMaps.curMap.Cols; j++) {
-                                            if (m_Game.m_iBoxNum[i][j] == k) {
+                                            if (m_Game.state.m_iBoxNum[i][j] == k) {
                                                 flg = true;
                                                 break;
                                             }
@@ -398,18 +398,18 @@ public class myGameViewMap extends View {
                                         if (flg) break;
                                     }
                                     if (!flg) {
-                                        m_Game.m_iBoxNum[m_iR][m_iC] = k;
+                                        m_Game.state.m_iBoxNum[m_iR][m_iC] = k;
                                         break;
                                     }
                                 }
                             } else {
-                                m_Game.m_iBoxNum[m_iR][m_iC] = -1;
+                                m_Game.state.m_iBoxNum[m_iR][m_iC] = -1;
                             }
                         }
                     } else if (myMaps.m_bBiaochi) {  //在标尺显示状态，双击墙壁、空地、仓管员或墙外
                         int[] RC = get_iR_iC((int)e.getX(), (int)e.getY());
-                        if (RC[1] >= 0 && RC[1] <= m_Game.m_cArray.length && RC[0] >= 0 && RC[0] < m_Game.m_cArray[0].length) {
-                            m_Game.mark44[RC[1]][RC[0]] = !m_Game.mark44[RC[1]][RC[0]];  //切换标尺显示标志
+                        if (RC[1] >= 0 && RC[1] <= m_Game.state.m_cArray.length && RC[0] >= 0 && RC[0] < m_Game.state.m_cArray[0].length) {
+                            m_Game.state.mark44[RC[1]][RC[0]] = !m_Game.state.mark44[RC[1]][RC[0]];  //切换标尺显示标志
                         }
                     } else if (mClickObj == '#' || mClickObj == '_') {  //双击箱子、墙、墙外
                         if (myMaps.m_Sets[20] == 0) m_Game.setMenuVisible();  //全屏
@@ -428,7 +428,7 @@ public class myGameViewMap extends View {
 
             public boolean onSingleTapUp(MotionEvent e) {
                 if (m_lShowAnsInf) m_lShowAnsInf = false; //有了动作后，自动关闭答案信息的显示
-                m_Game.m_bACT_ERROR = false;  //执行动作时是否遇到错误
+                m_Game.state.m_bACT_ERROR = false;  //执行动作时是否遇到错误
                 if (m_nArenaTop > 0 && m_rChangeBK.contains((int) e.getX(), (int) e.getY())) {  //切换更换背景皮肤模式
                     m_lChangeBK = !m_lChangeBK;
                     return true;
@@ -799,15 +799,15 @@ public class myGameViewMap extends View {
         };
 
         //看看哪个方向上有“墙”
-        if (c > 0 && m_Game.m_cArray[r][c - 1] == '#') bz |= dir[myMaps.m_nTrun][0]; //左
-        if (r > 0 && m_Game.m_cArray[r - 1][c] == '#') bz |= dir[myMaps.m_nTrun][1]; //上
-        if (c < m_Game.m_cArray[0].length - 1 && m_Game.m_cArray[r][c + 1] == '#') bz |= dir[myMaps.m_nTrun][2]; //右
-        if (r < m_Game.m_cArray.length - 1 && m_Game.m_cArray[r + 1][c] == '#') bz |= dir[myMaps.m_nTrun][3]; //下
+        if (c > 0 && m_Game.state.m_cArray[r][c - 1] == '#') bz |= dir[myMaps.m_nTrun][0]; //左
+        if (r > 0 && m_Game.state.m_cArray[r - 1][c] == '#') bz |= dir[myMaps.m_nTrun][1]; //上
+        if (c < m_Game.state.m_cArray[0].length - 1 && m_Game.state.m_cArray[r][c + 1] == '#') bz |= dir[myMaps.m_nTrun][2]; //右
+        if (r < m_Game.state.m_cArray.length - 1 && m_Game.state.m_cArray[r + 1][c] == '#') bz |= dir[myMaps.m_nTrun][3]; //下
 
         m_lWallTop = ((bz == dir[myMaps.m_nTrun][4] ||
                 bz == dir[myMaps.m_nTrun][5] ||
                 bz == dir[myMaps.m_nTrun][6] || bz == 15)
-                && c > 0 && r > 0 && m_Game.m_cArray[r - 1][c - 1] == '#'); //是否需要画墙顶
+                && c > 0 && r > 0 && m_Game.state.m_cArray[r - 1][c - 1] == '#'); //是否需要画墙顶
 
         return bz;
 //              0: //四方向全无
@@ -833,8 +833,8 @@ public class myGameViewMap extends View {
     void getRect(int i, int j, Rect rt) {
         char[][] mArray;
 
-        if (m_Game.bt_BK.isChecked()) mArray = m_Game.bk_cArray;
-        else mArray = m_Game.m_cArray;
+        if (m_Game.bt_BK.isChecked()) mArray = m_Game.state.bk_cArray;
+        else mArray = m_Game.state.m_cArray;
 
         //根据箱子的移动位置，计算所用的图片（是否使用在目标点上的图片）
         switch (myMaps.m_Sets[14]) {
@@ -1072,8 +1072,8 @@ public class myGameViewMap extends View {
 
                 if (myMaps.m_Sets[13] == 1) {  //“互动双推”模式
                     if (m_Game.bt_BK.isChecked()) {
-                        ch = m_Game.bk_cArray[i][j];  //逆推迷宫
-                        if (m_Game.m_cArray[i][j] == '$' || m_Game.m_cArray[i][j] == '*'){
+                        ch = m_Game.state.bk_cArray[i][j];  //逆推迷宫
+                        if (m_Game.state.m_cArray[i][j] == '$' || m_Game.state.m_cArray[i][j] == '*'){
                             switch (ch) {
                                 case '-':
                                     ch = '.';
@@ -1097,8 +1097,8 @@ public class myGameViewMap extends View {
                             }
                         }
                     } else {
-                        ch = m_Game.m_cArray[i][j];  //正推迷宫
-                        if (m_Game.bk_cArray[i][j] == '$' || m_Game.bk_cArray[i][j] == '*'){
+                        ch = m_Game.state.m_cArray[i][j];  //正推迷宫
+                        if (m_Game.state.bk_cArray[i][j] == '$' || m_Game.state.bk_cArray[i][j] == '*'){
                             switch (ch) {
                                 case '-':
                                     ch = '.';
@@ -1124,9 +1124,9 @@ public class myGameViewMap extends View {
                     }
                 } else {   //非“互动双推”模式
                     if (m_Game.bt_BK.isChecked()) {
-                        ch = m_Game.bk_cArray[i][j];  //逆推迷宫
+                        ch = m_Game.state.bk_cArray[i][j];  //逆推迷宫
                         if (myMaps.m_Sets[32] == 1) {  //逆推时使用正推的目标点
-                            switch (m_Game.m_cArray[i][j]) {
+                            switch (m_Game.state.m_cArray[i][j]) {
                                 case '.':
                                 case '*':
                                 case '+':
@@ -1157,7 +1157,7 @@ public class myGameViewMap extends View {
                             }
                         }
                     } else {
-                        ch = m_Game.m_cArray[i][j];   //正推迷宫
+                        ch = m_Game.state.m_cArray[i][j];   //正推迷宫
                     }
                 }
 
@@ -1294,26 +1294,26 @@ public class myGameViewMap extends View {
                         }
                         break;
                     case '$':
-                        if (d_Moves >= m_PicWidth || m_Game.b_nRow != i || m_Game.b_nCol != j) {
+                        if (d_Moves >= m_PicWidth || m_Game.state.b_nRow != i || m_Game.state.b_nCol != j) {
                             leftTmp = rt.left;
                             topTmp = rt.top;
                             canvas.drawBitmap(myMaps.BoxPic, leftTmp, topTmp, myPaint);
                             if (myMaps.m_bBianhao) {  //箱子使用自动编号
-                                boxNum(canvas, rt, m_Game.m_iBoxNum2[i][j]);
+                                boxNum(canvas, rt, m_Game.state.m_iBoxNum2[i][j]);
                             } else if (myMaps.m_Sets[41] == 1) {
-                                boxNum(canvas, rt, m_Game.m_iBoxNum[i][j]);
+                                boxNum(canvas, rt, m_Game.state.m_iBoxNum[i][j]);
                             }
                         }
                         break;
                     case '*':
-                        if (d_Moves >= m_PicWidth || m_Game.b_nRow != i || m_Game.b_nCol != j) {
+                        if (d_Moves >= m_PicWidth || m_Game.state.b_nRow != i || m_Game.state.b_nCol != j) {
                             leftTmp = rt.left;
                             topTmp = rt.top;
                             canvas.drawBitmap(myMaps.BoxGoalPic, leftTmp, topTmp, myPaint);
                             if (myMaps.m_bBianhao) {  //箱子使用自动编号
-                                boxNum(canvas, rt, m_Game.m_iBoxNum2[i][j]);
+                                boxNum(canvas, rt, m_Game.state.m_iBoxNum2[i][j]);
                             } else if (myMaps.m_Sets[41] == 1) {
-                                boxNum(canvas, rt, m_Game.m_iBoxNum[i][j]);
+                                boxNum(canvas, rt, m_Game.state.m_iBoxNum[i][j]);
                             }
                         }
                         break;
@@ -1377,7 +1377,7 @@ public class myGameViewMap extends View {
                         break;
                 } //end switch
 
-                if (myMaps.m_bBiaochi && (i == 0 || j == 0 || i == m_nRows-1 || j == m_nCols-1 || m_Game.mark44[i][j] && (!m_Game.bt_BK.isChecked() && m_Game.m_cArray[i][j] != '$' && m_Game.m_cArray[i][j] != '*'|| m_Game.bt_BK.isChecked() && m_Game.bk_cArray[i][j] != '$' && m_Game.bk_cArray[i][j] != '*'))) {   //标尺开关
+                if (myMaps.m_bBiaochi && (i == 0 || j == 0 || i == m_nRows-1 || j == m_nCols-1 || m_Game.state.mark44[i][j] && (!m_Game.bt_BK.isChecked() && m_Game.state.m_cArray[i][j] != '$' && m_Game.state.m_cArray[i][j] != '*'|| m_Game.bt_BK.isChecked() && m_Game.state.bk_cArray[i][j] != '$' && m_Game.state.bk_cArray[i][j] != '*'))) {   //标尺开关
                     if (i == 0 || j == 0 || i == m_nRows-1 || j == m_nCols-1) {
                         myPaint.setTextSize(m_PicWidth / 4);
                     } else {
@@ -1401,30 +1401,30 @@ public class myGameViewMap extends View {
                 leftTmp = rt.left+12.5f;
                 topTmp = rt.top+12.5f;
                 if (m_Game.bt_BK.isChecked()) {  //逆推
-                    if (m_bBoxTo2 && m_Game.mPathfinder.mark4[i][j]) { // 箱子可达位置提示
-                        if ((myMaps.m_Sets[8] == 1 || (m_iR == i && m_iC == j)) && (myMaps.m_Sets[24] == 0 || m_Game.mark14[i][j] > 0)) {
+                    if (m_bBoxTo2 && m_Game.state.mPathfinder.mark4[i][j]) { // 箱子可达位置提示
+                        if ((myMaps.m_Sets[8] == 1 || (m_iR == i && m_iC == j)) && (myMaps.m_Sets[24] == 0 || m_Game.state.mark14[i][j] > 0)) {
                             canvas.drawBitmap(myMaps.KedaPic, leftTmp, topTmp, myPaint);
                         }
                     }
                     if (myMaps.m_Sets[8] == 1) {  // 显示可达位置提示
-                        if (m_boxCanMove2 && m_Game.mark12[i][j] || m_boxCanCome2 && m_Game.mark12[i][j]) { // 可动/来箱子提示
+                        if (m_boxCanMove2 && m_Game.state.mark12[i][j] || m_boxCanCome2 && m_Game.state.mark12[i][j]) { // 可动/来箱子提示
                             canvas.drawBitmap(myMaps.KedaPic, leftTmp, topTmp, myPaint);
                         }
-                        if (m_bManTo2 && m_Game.mPathfinder.mark2[i][j]) { // 人可达位置提示
+                        if (m_bManTo2 && m_Game.state.mPathfinder.mark2[i][j]) { // 人可达位置提示
                             canvas.drawBitmap(myMaps.KedaPic, leftTmp, topTmp, myPaint);
                        }
-                        if ((m_boxCanMove2 || m_bManTo2 || m_bBoxTo2) && m_Game.mPathfinder.mark6[i][j]) { //穿越点提示
+                        if ((m_boxCanMove2 || m_bManTo2 || m_bBoxTo2) && m_Game.state.mPathfinder.mark6[i][j]) { //穿越点提示
                             canvas.drawBitmap(myMaps.ChuanyuePic, leftTmp, topTmp, myPaint);
                         }
                     }
-                    if (m_Game.m_bNetLock) {
-                        if (m_Game.mark41[i][j] == 1) {        // 网位
+                    if (m_Game.state.m_bNetLock) {
+                        if (m_Game.state.mark41[i][j] == 1) {        // 网位
                             canvas.drawBitmap(myMaps.WangweiPic, leftTmp, topTmp, myPaint);
-                        } else if (m_Game.mark41[i][j] > 1) {  // 网口位
+                        } else if (m_Game.state.mark41[i][j] > 1) {  // 网口位
                             canvas.drawBitmap(myMaps.WangkouPic, leftTmp, topTmp, myPaint);
                         }
                     }
-                    if (m_Game.m_nRow3 == i && m_Game.m_nCol3 == j) {//正推地图中，仓管员的初始位置
+                    if (m_Game.state.m_nRow3 == i && m_Game.state.m_nCol3 == j) {//正推地图中，仓管员的初始位置
                         myPaint.setARGB(150, 200, 0, 200);
                         myPaint.setStyle(Paint.Style.STROKE);
                         myPaint.setStrokeWidth(3);
@@ -1432,7 +1432,7 @@ public class myGameViewMap extends View {
                         myPaint.setARGB(255, 0, 0, 0);
                     }
                     //当“逆推时使用正推目标点”时，对逆推目标点做简单提示
-                    if (m_lShowDst2 && myMaps.m_Sets[32] == 1 && (m_Game.bk_cArray[i][j] == '.' || m_Game.bk_cArray[i][j] == '*' || m_Game.bk_cArray[i][j] == '+')) {
+                    if (m_lShowDst2 && myMaps.m_Sets[32] == 1 && (m_Game.state.bk_cArray[i][j] == '.' || m_Game.state.bk_cArray[i][j] == '*' || m_Game.state.bk_cArray[i][j] == '+')) {
                         myPaint.setARGB(127, 255, 255, 0);
                         myPaint.setStyle(Paint.Style.FILL);
                         rt1.set(rt.left+20, rt.top+20, rt.right-20, rt.bottom-20);
@@ -1443,33 +1443,33 @@ public class myGameViewMap extends View {
                         myPaint.setARGB(255, 0, 0, 0);
                     }
                 } else {  //正推
-                    if (m_bBoxTo && m_Game.mPathfinder.mark3[i][j]) { //箱子可达位置提示
+                    if (m_bBoxTo && m_Game.state.mPathfinder.mark3[i][j]) { //箱子可达位置提示
                         if (myMaps.m_Sets[8] == 1 || (m_iR == i && m_iC == j)) {
                             canvas.drawBitmap(myMaps.KedaPic, leftTmp, topTmp, myPaint);
                         }
                     }
                     if (myMaps.m_Sets[8] == 1) {  //显示可达位置提示
-                        if (m_boxCanMove && m_Game.mark11[i][j] || m_boxCanCome && m_Game.mark11[i][j]) { // 可动/来箱子提示
+                        if (m_boxCanMove && m_Game.state.mark11[i][j] || m_boxCanCome && m_Game.state.mark11[i][j]) { // 可动/来箱子提示
                             canvas.drawBitmap(myMaps.KedaPic, leftTmp, topTmp, myPaint);
                         }
-                        if (m_bManTo && m_Game.mPathfinder.mark1[i][j]) {                              // 人可达位置提示
+                        if (m_bManTo && m_Game.state.mPathfinder.mark1[i][j]) {                              // 人可达位置提示
                             canvas.drawBitmap(myMaps.KedaPic, leftTmp, topTmp, myPaint);
                         }
-                        if ((m_boxCanMove || m_bManTo || m_bBoxTo) && m_Game.mPathfinder.mark5[i][j]) { // 穿越点提示
+                        if ((m_boxCanMove || m_bManTo || m_bBoxTo) && m_Game.state.mPathfinder.mark5[i][j]) { // 穿越点提示
                             canvas.drawBitmap(myMaps.ChuanyuePic, leftTmp, topTmp, myPaint);
                         }
                     }
-                    if (m_boxNoMoved && !m_Game.mark11[i][j] ||
-                        m_boxNoUsed && !m_Game.mark12[i][j] && (ch == '-' || ch == '.')) {  //显示未动过的箱子提示或地板未被使用过
+                    if (m_boxNoMoved && !m_Game.state.mark11[i][j] ||
+                        m_boxNoUsed && !m_Game.state.mark12[i][j] && (ch == '-' || ch == '.')) {  //显示未动过的箱子提示或地板未被使用过
                         myPaint.setColor(Color.WHITE);                    //设置画笔颜色
                         myPaint.setStrokeWidth((float) 5.0);              //设置线宽
                         canvas.drawLine(rt.left+10, rt.top+10, rt.right-10, rt.bottom-10, myPaint);
                         canvas.drawLine(rt.right-10, rt.top+10, rt.left+10, rt.bottom-10, myPaint);
                     }
-                    if (m_Game.m_bNetLock) {
-                        if (m_Game.mark41[i][j] == 1) {  //网锁位
+                    if (m_Game.state.m_bNetLock) {
+                        if (m_Game.state.mark41[i][j] == 1) {  //网锁位
                             canvas.drawBitmap(myMaps.WangweiPic, leftTmp, topTmp, myPaint);
-                        } else if (m_Game.mark41[i][j] > 1) {  //网口位
+                        } else if (m_Game.state.mark41[i][j] > 1) {  //网口位
                             canvas.drawBitmap(myMaps.WangkouPic, leftTmp, topTmp, myPaint);
                         }
                     }
@@ -1480,12 +1480,12 @@ public class myGameViewMap extends View {
                     myPaint.setARGB(100, 200, 0, 200);
                     myPaint.setStyle(Paint.Style.FILL);
                     if (m_Game.bt_BK.isChecked()) {  //逆推
-                        if (m_Game.bk_selArray[i][j] == 1) canvas.drawRect(rt, myPaint);
+                        if (m_Game.state.bk_selArray[i][j] == 1) canvas.drawRect(rt, myPaint);
                         if (selNode2.r2 < 0 && m_iR == i && m_iC == j) {
                             canvas.drawBitmap(myMaps.SelPic, leftTmp, topTmp, myPaint);
                         }
                     } else {
-                        if (m_Game.m_selArray[i][j] == 1) canvas.drawRect(rt, myPaint);
+                        if (m_Game.state.m_selArray[i][j] == 1) canvas.drawRect(rt, myPaint);
                         if (selNode.r2 < 0 && m_iR == i && m_iC == j) {
                             canvas.drawBitmap(myMaps.SelPic, leftTmp, topTmp, myPaint);
                         }
@@ -1501,9 +1501,9 @@ public class myGameViewMap extends View {
         } //end for i
 
         //精细移动动画
-        if (!m_Game.m_bACT_ERROR && (d_Moves < m_PicWidth || m_Game.m_nStep > 0)) {  // 有移动
-            if (m_Game.b_nRow >= 0) {  // 移动箱子
-                getRect(m_Game.b_nRow, m_Game.b_nCol, rt);
+        if (!m_Game.state.m_bACT_ERROR && (d_Moves < m_PicWidth || m_Game.state.m_nStep > 0)) {  // 有移动
+            if (m_Game.state.b_nRow >= 0) {  // 移动箱子
+                getRect(m_Game.state.b_nRow, m_Game.state.b_nCol, rt);
                 leftTmp = rt.left;
                 topTmp = rt.top;
 
@@ -1516,15 +1516,15 @@ public class myGameViewMap extends View {
                 }
 
                 if (myMaps.m_bBianhao) {  // 箱子使用自动编号
-                    boxNum(canvas, rt, m_Game.m_iBoxNum2[m_Game.b_nRow][m_Game.b_nCol]);
+                    boxNum(canvas, rt, m_Game.state.m_iBoxNum2[m_Game.state.b_nRow][m_Game.state.b_nCol]);
                 } else {
-                    boxNum(canvas, rt, m_Game.m_iBoxNum[m_Game.b_nRow][m_Game.b_nCol]);
+                    boxNum(canvas, rt, m_Game.state.m_iBoxNum[m_Game.state.b_nRow][m_Game.state.b_nCol]);
                 }
             }
 
             // 移动的仓管员
-            if (m_Game.bt_BK.isChecked()) getRect(m_Game.m_nRow2, m_Game.m_nCol2, rt);
-            else getRect(m_Game.m_nRow, m_Game.m_nCol, rt);
+            if (m_Game.bt_BK.isChecked()) getRect(m_Game.state.m_nRow2, m_Game.state.m_nCol2, rt);
+            else getRect(m_Game.state.m_nRow, m_Game.state.m_nCol, rt);
 
             leftTmp = rt.left;
             topTmp = rt.top;
@@ -1747,17 +1747,17 @@ public class myGameViewMap extends View {
                 }
             } else {
                 if (m_Game.bt_BK.isChecked()) {  //逆推
-                    mStr = String.valueOf(m_Game.m_iStep[3]);
+                    mStr = String.valueOf(m_Game.state.m_iStep[3]);
                     myPaint.getTextBounds(mStr, 0, mStr.length(), rt8);  //移动数框
                     canvas.drawText(mStr, rt2.left + (rt7.width()-rt8.width())/2, rt8.height()+hh*2, myPaint);
-                    mStr = String.valueOf(m_Game.m_iStep[2]);
+                    mStr = String.valueOf(m_Game.state.m_iStep[2]);
                     myPaint.getTextBounds(mStr, 0, mStr.length(), rt8);  //推动数框
                     canvas.drawText(mStr, rt3.left + (rt7.width()-rt8.width())/2, rt8.height()+hh*2, myPaint);
                 } else {  //正推
-                    mStr = String.valueOf(m_Game.m_iStep[1]);
+                    mStr = String.valueOf(m_Game.state.m_iStep[1]);
                     myPaint.getTextBounds(mStr, 0, mStr.length(), rt8);  //移动数框
                     canvas.drawText(mStr, rt2.left + (rt7.width()-rt8.width())/2, rt8.height()+hh*2, myPaint);
-                    mStr = String.valueOf(m_Game.m_iStep[0]);
+                    mStr = String.valueOf(m_Game.state.m_iStep[0]);
                     myPaint.getTextBounds(mStr, 0, mStr.length(), rt8);  //推动数框
                     canvas.drawText(mStr, rt3.left + (rt7.width()-rt8.width())/2, rt8.height()+hh*2, myPaint);
                 }
@@ -1803,8 +1803,8 @@ public class myGameViewMap extends View {
             canvas.drawText("互动双推", getWidth()-ss*4-4, m_nArenaTop+ss+4, myPaint);
         }
 
-        if (!m_Game.bt_BK.isChecked() && m_Game.m_Gif_Start > 0) {
-            mStr = "GIF 开始点：" + m_Game.m_Gif_Start;
+        if (!m_Game.bt_BK.isChecked() && m_Game.state.m_Gif_Start > 0) {
+            mStr = "GIF 开始点：" + m_Game.state.m_Gif_Start;
             myPaint.setStyle(Paint.Style.FILL_AND_STROKE);
             myPaint.setARGB(255, 0, 0, 0);
             myPaint.setStrokeWidth(5);
@@ -1867,7 +1867,7 @@ public class myGameViewMap extends View {
 
     //是否寻求阶梯
     private boolean isCanMoved(boolean isBK, int f_Row, int f_Col) {
-        boolean[][] mark = isBK ? m_Game.mPathfinder.mark4 : m_Game.mPathfinder.mark3;
+        boolean[][] mark = isBK ? m_Game.state.mPathfinder.mark4 : m_Game.state.mPathfinder.mark3;
         try {
             return mark[f_Row][f_Col];
         } catch (ArrayIndexOutOfBoundsException ex) { } catch (Throwable ex) { }
@@ -1876,8 +1876,8 @@ public class myGameViewMap extends View {
 
     //是否寻求阶梯
     private int isLadder(boolean isBK, int f_Row, int f_Col) {
-        boolean[][] mark = isBK ? m_Game.mPathfinder.mark4 : m_Game.mPathfinder.mark3;
-        char[][] m_Level = isBK ? m_Game.bk_cArray : m_Game.m_cArray;
+        boolean[][] mark = isBK ? m_Game.state.mPathfinder.mark4 : m_Game.state.mPathfinder.mark3;
+        char[][] m_Level = isBK ? m_Game.state.bk_cArray : m_Game.state.m_cArray;
         int dirR, dirC, dir;
         try {
             if (!isBox(m_Level,f_Row - 2,f_Col - 2) && isBox(m_Level,f_Row - 1,f_Col - 1) && mark[f_Row - 1][f_Col - 1] && (isCanMoved(isBK, f_Row,f_Col - 1) || isCanMoved(isBK, f_Row - 1,f_Col) || isCanMoved(isBK, f_Row - 2,f_Col - 1) || isCanMoved(isBK, f_Row - 1,f_Col - 2))) {
@@ -1908,8 +1908,8 @@ public class myGameViewMap extends View {
                 return 0;  //无有效阶梯形成
             }
 
-            m_Game.mPathfinder.FindBlock(isBK, m_Level, f_Row, f_Col);   //计算割点，块
-            m_Game.mPathfinder.boxReachable(isBK, f_Row, f_Col, isBK ? m_Game.m_nRow2 : m_Game.m_nRow, isBK ? m_Game.m_nCol2 : m_Game.m_nCol);  //计算箱子可达点
+            m_Game.state.mPathfinder.FindBlock(isBK, m_Level, f_Row, f_Col);   //计算割点，块
+            m_Game.state.mPathfinder.boxReachable(isBK, f_Row, f_Col, isBK ? m_Game.state.m_nRow2 : m_Game.state.m_nRow, isBK ? m_Game.state.m_nCol2 : m_Game.state.m_nCol);  //计算箱子可达点
 
             for (int i = 0; i < m_nRows; i++) {
                 for (int j = 0; j < m_nCols; j++) {
@@ -1943,28 +1943,28 @@ public class myGameViewMap extends View {
                 RC[1] = ((int) ((j - m_fTop ) / m_fScale)) / m_PicWidth;
                 break;
             case 1:
-                RC[1] = m_Game.m_cArray.length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
+                RC[1] = m_Game.state.m_cArray.length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
                 RC[0] = ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
                 break;
             case 2:
-                RC[0] = m_Game.m_cArray[0].length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
-                RC[1] = m_Game.m_cArray.length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
+                RC[0] = m_Game.state.m_cArray[0].length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
+                RC[1] = m_Game.state.m_cArray.length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
                 break;
             case 3:
                 RC[1] = ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
-                RC[0] = m_Game.m_cArray[0].length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
+                RC[0] = m_Game.state.m_cArray[0].length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
                 break;
             case 4:
-                RC[0] = m_Game.m_cArray[0].length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
+                RC[0] = m_Game.state.m_cArray[0].length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
                 RC[1] = ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
                 break;
             case 5:
-                RC[1] = m_Game.m_cArray.length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
-                RC[0] = m_Game.m_cArray[0].length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
+                RC[1] = m_Game.state.m_cArray.length - 1 - ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
+                RC[0] = m_Game.state.m_cArray[0].length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
                 break;
             case 6:
                 RC[0] = ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
-                RC[1] = m_Game.m_cArray.length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
+                RC[1] = m_Game.state.m_cArray.length - 1 - ((int) ((j - m_fTop) / m_fScale)) / m_PicWidth;
                 break;
             case 7:
                 RC[1] = ((int) ((i - m_fLeft) / m_fScale)) / m_PicWidth;
@@ -2002,45 +2002,45 @@ public class myGameViewMap extends View {
     //根据点击位置确定行动
     private void doACT(int i, int j, boolean isAct) {
 
-        m_Game.m_bACT_ERROR = false;  //执行动作时是否遇到错误
+        m_Game.state.m_bACT_ERROR = false;  //执行动作时是否遇到错误
 
         m_boxCanMove = false;  //关闭可动箱子提示状态
         m_boxCanMove2 = false;
         m_boxNoMoved = false;  //关闭未动箱子提示状态
         m_boxNoUsed = false;  //关闭未使用地板提示状态
 
-        if (m_Game.m_bBusing || myMaps.isMacroDebug) {
+        if (m_Game.state.m_bBusing || myMaps.isMacroDebug) {
             mClickObj = '_';
             return;
         }
         if ((m_lGoto || m_lGoto2) && mrProgressBar.contains(i, j)) {  //进度条内
-            m_Game.m_bNetLock = false;  //取消网型提示
+            m_Game.state.m_bNetLock = false;  //取消网型提示
             if (m_Game.bt_BK.isChecked()) {  //逆推
                 if (m_lGoto2) {
                     curMoves2 = i - stLeft;
-                    int len1 = m_Game.m_lstMovUnDo2.size();
-                    int len2 = m_Game.m_lstMovReDo2.size();
+                    int len1 = m_Game.state.m_lstMovUnDo2.size();
+                    int len2 = m_Game.state.m_lstMovReDo2.size();
                     int n = (int) ((double) curMoves2 / (stRight - stLeft) * (len1+len2));  //计算 goto 点
                     if (n > len1) {
                         for (int k = len1; k < n; k++) m_Game.reDo2();
-                        m_Game.m_bBusing = false;
+                        m_Game.state.m_bBusing = false;
                     } else if (n < len1) {
                         for (int k = n; k < len1; k++) m_Game.unDo2();
-                        m_Game.m_bBusing = false;
+                        m_Game.state.m_bBusing = false;
                     }
                 }
             } else {
                 if (m_lGoto) {
                     curMoves = i - stLeft;
-                    int len1 = m_Game.m_lstMovUnDo.size();
-                    int len2 = m_Game.m_lstMovReDo.size();
+                    int len1 = m_Game.state.m_lstMovUnDo.size();
+                    int len2 = m_Game.state.m_lstMovReDo.size();
                     int n = (int) ((double) curMoves / (stRight - stLeft) * (len1+len2));  //计算 goto 点
                     if (n > len1) {
                         for (int k = len1; k < n; k++) m_Game.reDo1();
-                        m_Game.m_bBusing = false;
+                        m_Game.state.m_bBusing = false;
                     } else if (n < len1) {
                         for (int k = n; k < len1; k++) m_Game.unDo1();
-                        m_Game.m_bBusing = false;
+                        m_Game.state.m_bBusing = false;
                     }
                 }
             }
@@ -2083,22 +2083,22 @@ public class myGameViewMap extends View {
             m_iC = RC[0];
             m_iR = RC[1];
         }
-        if (m_iR < 0 || m_iR >= m_Game.m_cArray.length || m_iC < 0 || m_iC >= m_Game.m_cArray[0].length) {
+        if (m_iR < 0 || m_iR >= m_Game.state.m_cArray.length || m_iC < 0 || m_iC >= m_Game.state.m_cArray[0].length) {
             mClickObj = '_';
             return;
         }
 
-        if (m_Game.bt_BK.isChecked()) mClickObj = m_Game.bk_cArray[m_iR][m_iC];
-        else mClickObj = m_Game.m_cArray[m_iR][m_iC];
+        if (m_Game.bt_BK.isChecked()) mClickObj = m_Game.state.bk_cArray[m_iR][m_iC];
+        else mClickObj = m_Game.state.m_cArray[m_iR][m_iC];
         if (!isAct) return;
 
-        m_Game.m_nStep = 0;
-        m_Game.m_bYanshi = false;
-        m_Game.m_bYanshi2 = false;
+        m_Game.state.m_nStep = 0;
+        m_Game.state.m_bYanshi = false;
+        m_Game.state.m_bYanshi2 = false;
 
         if (m_Game.bt_Sel.isChecked()) { //计数状态   | counting is activated
             if (m_Game.bt_BK.isChecked()) {  //逆推   | reverse mode is activated
-                selNode2.setPT(m_Game.bk_selArray, m_iR, m_iC);
+                selNode2.setPT(m_Game.state.bk_selArray, m_iR, m_iC);
                 m_Count[3] = 0;  //逆推箱子数         | number of boxes in reverse mode (in selected area)
                 m_Count[4] = 0;  //逆推目标数         | number of goals in reverse mode (in selected area)
                 m_Count[5] = 0;  //逆推完成数         | number of boxes on goals in reverse mode (in selected area)
@@ -2107,18 +2107,18 @@ public class myGameViewMap extends View {
                     // Interactive double push counting:
                     // counting the goals means counting the boxes on their current
                     // forward play position! This means the boxes must be
-                    // read from m_Game.m_cArray
+                    // read from m_Game.state.m_cArray
                     for (int r = 0; r < m_nRows; r++) {
                         for (int c = 0; c < m_nCols; c++) {
-                            if(m_Game.bk_selArray[r][c] > 0) {  // position is marked for counting
-                                if (m_Game.bk_cArray[r][c] == '$' || m_Game.bk_cArray[r][c] == '*') {   // backward board contains a box
+                            if(m_Game.state.bk_selArray[r][c] > 0) {  // position is marked for counting
+                                if (m_Game.state.bk_cArray[r][c] == '$' || m_Game.state.bk_cArray[r][c] == '*') {   // backward board contains a box
                                     m_Count[3]++;   // one more box
-                                    if(m_Game.m_cArray[r][c] == '$' || m_Game.m_cArray[r][c] == '*') {  // forward board contains a box
+                                    if(m_Game.state.m_cArray[r][c] == '$' || m_Game.state.m_cArray[r][c] == '*') {  // forward board contains a box
                                         m_Count[4]++; // one more goal
                                         m_Count[5]++; // one more box on goal
                                     }
                                 } else {
-                                    if(m_Game.m_cArray[r][c] == '$' || m_Game.m_cArray[r][c] == '*') { // forward board contains a box
+                                    if(m_Game.state.m_cArray[r][c] == '$' || m_Game.state.m_cArray[r][c] == '*') { // forward board contains a box
                                         m_Count[4]++; // one more goal
                                     }
                                 }
@@ -2129,108 +2129,108 @@ public class myGameViewMap extends View {
                     // Counting for normal reverse play
                     for (int r = 0; r < m_nRows; r++) {
                         for (int c = 0; c < m_nCols; c++) {
-                            switch (m_Game.bk_cArray[r][c]) {
+                            switch (m_Game.state.bk_cArray[r][c]) {
                                 case '$':
-                                    m_Count[3] += m_Game.bk_selArray[r][c];
+                                    m_Count[3] += m_Game.state.bk_selArray[r][c];
                                     break;
                                 case '*':
-                                    m_Count[3] += m_Game.bk_selArray[r][c];
-                                    m_Count[4] += m_Game.bk_selArray[r][c];
-                                    m_Count[5] += m_Game.bk_selArray[r][c];
+                                    m_Count[3] += m_Game.state.bk_selArray[r][c];
+                                    m_Count[4] += m_Game.state.bk_selArray[r][c];
+                                    m_Count[5] += m_Game.state.bk_selArray[r][c];
                                     break;
                                 case '.':
                                 case '+':
-                                    m_Count[4] += m_Game.bk_selArray[r][c];
+                                    m_Count[4] += m_Game.state.bk_selArray[r][c];
                                     break;
                             }
                         }
                     }
                 }
             } else {  //正推
-                selNode.setPT(m_Game.m_selArray, m_iR, m_iC);
+                selNode.setPT(m_Game.state.m_selArray, m_iR, m_iC);
                 m_Count[0] = 0;  //正推箱子数
                 m_Count[1] = 0;  //正推目标数
                 m_Count[2] = 0;  //正推完成数
                 for (int r = 0; r < m_nRows; r++)
                     for (int c = 0; c < m_nCols; c++) {
-                        switch (m_Game.m_cArray[r][c]) {
+                        switch (m_Game.state.m_cArray[r][c]) {
                             case '$':
-                                m_Count[0] += m_Game.m_selArray[r][c];
+                                m_Count[0] += m_Game.state.m_selArray[r][c];
                                 break;
                             case '*':
-                                m_Count[0] += m_Game.m_selArray[r][c];
-                                m_Count[1] += m_Game.m_selArray[r][c];
-                                m_Count[2] += m_Game.m_selArray[r][c];
+                                m_Count[0] += m_Game.state.m_selArray[r][c];
+                                m_Count[1] += m_Game.state.m_selArray[r][c];
+                                m_Count[2] += m_Game.state.m_selArray[r][c];
                                 break;
                             case '.':
                             case '+':
-                                m_Count[1] += m_Game.m_selArray[r][c];
+                                m_Count[1] += m_Game.state.m_selArray[r][c];
                                 break;
                         }
                     }
             }
         } else {  //正常状态
-            m_Game.m_bNetLock = false;  //取消网型提示
+            m_Game.state.m_bNetLock = false;  //取消网型提示
             //逆推模式下，尚未动过箱子，且不在可达提示状态，点击空位是指定位置给仓管员
-            if (m_Game.bt_BK.isChecked() && m_Game.m_lstMovUnDo2.size() == 0) {
-                if (m_Game.bk_cArray[m_iR][m_iC] == '-' || m_Game.bk_cArray[m_iR][m_iC] == '.') {
+            if (m_Game.bt_BK.isChecked() && m_Game.state.m_lstMovUnDo2.size() == 0) {
+                if (m_Game.state.bk_cArray[m_iR][m_iC] == '-' || m_Game.state.bk_cArray[m_iR][m_iC] == '.') {
                     if (!m_bBoxTo2) {  //未在可达提示状态，新的逆推开始前，记录仓管员初始位置
-                        if (m_Game.m_nRow2 > -1) {  //非首次给仓管员定位，先清理前次定位
-                            if (m_Game.bk_cArray[m_Game.m_nRow2][m_Game.m_nCol2] == '@')
-                                m_Game.bk_cArray[m_Game.m_nRow2][m_Game.m_nCol2] = '-';
+                        if (m_Game.state.m_nRow2 > -1) {  //非首次给仓管员定位，先清理前次定位
+                            if (m_Game.state.bk_cArray[m_Game.state.m_nRow2][m_Game.state.m_nCol2] == '@')
+                                m_Game.state.bk_cArray[m_Game.state.m_nRow2][m_Game.state.m_nCol2] = '-';
                             else
-                                m_Game.bk_cArray[m_Game.m_nRow2][m_Game.m_nCol2] = '.';
+                                m_Game.state.bk_cArray[m_Game.state.m_nRow2][m_Game.state.m_nCol2] = '.';
                         }
 
                         //最新初始定位
-                        if (m_Game.bk_cArray[m_iR][m_iC] == '-')
-                            m_Game.bk_cArray[m_iR][m_iC] = '@';
+                        if (m_Game.state.bk_cArray[m_iR][m_iC] == '-')
+                            m_Game.state.bk_cArray[m_iR][m_iC] = '@';
                         else
-                            m_Game.bk_cArray[m_iR][m_iC] = '+';
+                            m_Game.state.bk_cArray[m_iR][m_iC] = '+';
 
-                        m_Game.m_nRow2 = m_iR;
-                        m_Game.m_nCol2 = m_iC;
-                        m_Game.m_nRow0 = m_Game.m_nRow2;
-                        m_Game.m_nCol0 = m_Game.m_nCol2;
+                        m_Game.state.m_nRow2 = m_iR;
+                        m_Game.state.m_nCol2 = m_iC;
+                        m_Game.state.m_nRow0 = m_Game.state.m_nRow2;
+                        m_Game.state.m_nCol0 = m_Game.state.m_nCol2;
 
                         invalidate();
 
                         MyToast.showToast(m_Game, "拉动箱子则逆推开始！", Toast.LENGTH_SHORT);
                         return;
                     }
-                } else if (m_Game.m_nRow2 < 0) {  //仓管员没有定位之前，点箱子是无效的
+                } else if (m_Game.state.m_nRow2 < 0) {  //仓管员没有定位之前，点箱子是无效的
                     return;
                 }
             }
 
             if (m_Game.bt_BK.isChecked()) {  //逆推
-                ch = m_Game.bk_cArray[m_iR][m_iC];
+                ch = m_Game.state.bk_cArray[m_iR][m_iC];
                 if (ch == '$' || ch == '*') { //点按了箱子，计算可达位置并显示
-                    if (m_boxCanCome2 && m_Game.mark12[m_iR][m_iC]) {  //在可来提示状态
-                        m_Game.mPathfinder.FindBlock(true, m_Game.bk_cArray, m_iR, m_iC);   //计算割点，块
-                        m_Game.mPathfinder.boxTo(true, m_iR, m_iC, m_iR2, m_iC2, m_Game.m_nRow2, m_Game.m_nCol2, m_Game.m_lstMovReDo2);
-                        m_Game.m_nStep = m_Game.m_lstMovReDo2.size();
-                        m_Game.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
+                    if (m_boxCanCome2 && m_Game.state.mark12[m_iR][m_iC]) {  //在可来提示状态
+                        m_Game.state.mPathfinder.FindBlock(true, m_Game.state.bk_cArray, m_iR, m_iC);   //计算割点，块
+                        m_Game.state.mPathfinder.boxTo(true, m_iR, m_iC, m_iR2, m_iC2, m_Game.state.m_nRow2, m_Game.state.m_nCol2, m_Game.state.m_lstMovReDo2);
+                        m_Game.state.m_nStep = m_Game.state.m_lstMovReDo2.size();
+                        m_Game.state.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
                         m_Game.DoEvent(2);
-                    } else if (m_bBoxTo2 && m_Game.mPathfinder.mark4[m_iR][m_iC]) {  //若在箱子可达位置提示状态又点了该箱子 && click_Box_Row2 == m_iR && click_Box_Col2 == m_iC
+                    } else if (m_bBoxTo2 && m_Game.state.mPathfinder.mark4[m_iR][m_iC]) {  //若在箱子可达位置提示状态又点了该箱子 && click_Box_Row2 == m_iR && click_Box_Col2 == m_iC
                         if (mLadder2.size() > 0) mLadder2.clear();
                         m_bBoxTo2 = false; //取消箱子可达位置提示状态标志
                     } else if (myMaps.m_Sets[29] == 1 && m_bBoxTo2 && (ladderDir2 = isLadder(true, m_iR, m_iC)) > 0) {  //是否触发爬阶梯（点击阶梯中的第二个箱子）
                     } else {
                         click_Box_Row2 = m_iR;
                         click_Box_Col2 = m_iC;
-                        if (myMaps.m_Sets[11] == 1 && m_Game.mark15 != null && m_Game.mark15[m_iR][m_iC]) {
+                        if (myMaps.m_Sets[11] == 1 && m_Game.state.mark15 != null && m_Game.state.mark15[m_iR][m_iC]) {
                             MyToast.showToast(myMaps.ctxDealFile, "这是一个被冻结的箱子！", Toast.LENGTH_SHORT);
                             for (int r = 0; r < m_nRows; r++) {
                                 for (int c = 0; c < m_nCols; c++) {
-                                    m_Game.mPathfinder.mark4[r][c] = false;
+                                    m_Game.state.mPathfinder.mark4[r][c] = false;
                                 }
                             }
-                            m_Game.mPathfinder.mark4[m_iR][m_iC] = true;
+                            m_Game.state.mPathfinder.mark4[m_iR][m_iC] = true;
                         } else {
                             if (mLadder2.size() > 0) mLadder2.clear();
-                            m_Game.mPathfinder.FindBlock(true, m_Game.bk_cArray, m_iR, m_iC);   //计算割点，块
-                            m_Game.mPathfinder.boxReachable(true, m_iR, m_iC, m_Game.m_nRow2, m_Game.m_nCol2);  //计算箱子可达点
+                            m_Game.state.mPathfinder.FindBlock(true, m_Game.state.bk_cArray, m_iR, m_iC);   //计算割点，块
+                            m_Game.state.mPathfinder.boxReachable(true, m_iR, m_iC, m_Game.state.m_nRow2, m_Game.state.m_nCol2);  //计算箱子可达点
                         }
                         m_bBoxTo2 = true;  //置箱子可达位置提示状态标志
                         m_bManTo2 = false;
@@ -2239,41 +2239,41 @@ public class myGameViewMap extends View {
                     if (ch == '-' || ch == '.' || //点按了空地
                             (m_bBoxTo2 && (ch == '@' || ch == '+'))) { //提示状态下点了人
                         if (m_bBoxTo2) {//若在箱子可达位置提示状态
-                            if (m_Game.mPathfinder.mark4[m_iR][m_iC] && (myMaps.m_Sets[24] == 0 || m_Game.mark14[m_iR][m_iC] > 0)) { //若为箱子的可达位置，自动推箱子的该位置
-                                m_Game.mPathfinder.boxTo(true, click_Box_Row2, click_Box_Col2, m_iR, m_iC, m_Game.m_nRow2, m_Game.m_nCol2, m_Game.m_lstMovReDo2);
-                                if (m_Game.m_lstMovReDo2.size() > 0) {
+                            if (m_Game.state.mPathfinder.mark4[m_iR][m_iC] && (myMaps.m_Sets[24] == 0 || m_Game.state.mark14[m_iR][m_iC] > 0)) { //若为箱子的可达位置，自动推箱子的该位置
+                                m_Game.state.mPathfinder.boxTo(true, click_Box_Row2, click_Box_Col2, m_iR, m_iC, m_Game.state.m_nRow2, m_Game.state.m_nCol2, m_Game.state.m_lstMovReDo2);
+                                if (m_Game.state.m_lstMovReDo2.size() > 0) {
                                     if (mLadder2.size() > 0) {  //加上爬阶梯路径
-                                        byte dir = m_Game.m_lstMovReDo2.getFirst();  //最后一个动作
+                                        byte dir = m_Game.state.m_lstMovReDo2.getFirst();  //最后一个动作
                                         switch (dir) {
                                             case 5:  //左
                                                 if (ladderDir2 == 1) {                      //左上阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 2) {               //右上阶梯
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 3) {               //右下阶梯
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 }
@@ -2282,33 +2282,33 @@ public class myGameViewMap extends View {
                                                 if (ladderDir2 == 1) {                      //左上阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 2) {               //右上阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 3) {               //右下阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 }
@@ -2317,33 +2317,33 @@ public class myGameViewMap extends View {
                                                 if (ladderDir2 == 1) {                      //左上阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 2) {               //右上阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 3) {               //右下阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 }
@@ -2352,33 +2352,33 @@ public class myGameViewMap extends View {
                                                 if (ladderDir2 == 1) {                      //左上阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 2) {               //右上阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else if (ladderDir2 == 3) {               //右下阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder2.removeFirst();
                                                     while (!mLadder2.isEmpty()) {
-                                                        m_Game.m_lstMovReDo2.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo2.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo2.offerFirst(dir);
                                                         mLadder2.removeFirst();
                                                     }
                                                 }
@@ -2386,17 +2386,17 @@ public class myGameViewMap extends View {
                                         }
                                     }
                                 }
-                                m_Game.m_nStep = m_Game.m_lstMovReDo2.size();
-                                m_Game.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
+                                m_Game.state.m_nStep = m_Game.state.m_lstMovReDo2.size();
+                                m_Game.state.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
                                 m_Game.DoEvent(2);
                             } else if (ch == '@' || ch == '+') {//点按了人
                                 m_bManTo2 = true;
                                 m_bBoxTo2 = false;
-                                m_Game.mPathfinder.manReachable(true, m_Game.bk_cArray, m_Game.m_nRow2, m_Game.m_nCol2);
+                                m_Game.state.mPathfinder.manReachable(true, m_Game.state.bk_cArray, m_Game.state.m_nRow2, m_Game.state.m_nCol2);
                             }
                         } else { //若仓管员可达，则自动移动
                             if (m_Game.FindPath(m_iR, m_iC, true)) {
-                                m_Game.m_nStep = m_Game.m_lstMovReDo2.size();
+                                m_Game.state.m_nStep = m_Game.state.m_lstMovReDo2.size();
                                 m_Game.DoEvent(2);
                             }
                         }
@@ -2406,7 +2406,7 @@ public class myGameViewMap extends View {
                                 m_bManTo2 = false;
                             } else {
                                 m_bManTo2 = true;
-                                m_Game.mPathfinder.manReachable(true, m_Game.bk_cArray, m_Game.m_nRow2, m_Game.m_nCol2);
+                                m_Game.state.mPathfinder.manReachable(true, m_Game.state.bk_cArray, m_Game.state.m_nRow2, m_Game.state.m_nCol2);
                             }
                         } else if (ch == '#' || ch == '_') {//点按了墙壁
                             m_bBoxTo2 = false;
@@ -2416,15 +2416,15 @@ public class myGameViewMap extends View {
                 }
                 m_boxCanCome2 = false;
             } else {   //end 逆推；begin 正推
-                ch = m_Game.m_cArray[m_iR][m_iC];
+                ch = m_Game.state.m_cArray[m_iR][m_iC];
                 if (ch == '$' || ch == '*') {  //点按了箱子，计算可达位置并显示
-                    if (m_boxCanCome && m_Game.mark11[m_iR][m_iC]) {  //在可来提示状态
-                        m_Game.mPathfinder.FindBlock(false, m_Game.m_cArray, m_iR, m_iC);   //计算割点，块
-                        m_Game.mPathfinder.boxTo(false, m_iR, m_iC, m_iR2, m_iC2, m_Game.m_nRow, m_Game.m_nCol, m_Game.m_lstMovReDo);
-                        m_Game.m_nStep = m_Game.m_lstMovReDo.size();
-                        m_Game.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
+                    if (m_boxCanCome && m_Game.state.mark11[m_iR][m_iC]) {  //在可来提示状态
+                        m_Game.state.mPathfinder.FindBlock(false, m_Game.state.m_cArray, m_iR, m_iC);   //计算割点，块
+                        m_Game.state.mPathfinder.boxTo(false, m_iR, m_iC, m_iR2, m_iC2, m_Game.state.m_nRow, m_Game.state.m_nCol, m_Game.state.m_lstMovReDo);
+                        m_Game.state.m_nStep = m_Game.state.m_lstMovReDo.size();
+                        m_Game.state.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
                         m_Game.DoEvent(1);
-                    } else if (m_bBoxTo && m_Game.mPathfinder.mark3[m_iR][m_iC]) {//若在箱子可达位置提示状态又点了该箱子 && click_Box_Row == m_iR && click_Box_Col == m_iC
+                    } else if (m_bBoxTo && m_Game.state.mPathfinder.mark3[m_iR][m_iC]) {//若在箱子可达位置提示状态又点了该箱子 && click_Box_Row == m_iR && click_Box_Col == m_iC
                         if (mLadder.size() > 0) mLadder.clear();
                         m_bBoxTo = false;    //取消箱子可达位置提示状态标志
                     } else if (myMaps.m_Sets[29] == 1 && m_bBoxTo && (ladderDir = isLadder(false, m_iR, m_iC)) > 0) {  //是否触发爬阶梯（点击阶梯中的第二个箱子）
@@ -2432,17 +2432,17 @@ public class myGameViewMap extends View {
                         if (mLadder.size() > 0) mLadder.clear();
                         click_Box_Row = m_iR;
                         click_Box_Col = m_iC;
-                        if (myMaps.m_Sets[11] == 1 && m_Game.mark16 != null && m_Game.mark16[m_iR][m_iC]) {
+                        if (myMaps.m_Sets[11] == 1 && m_Game.state.mark16 != null && m_Game.state.mark16[m_iR][m_iC]) {
                             MyToast.showToast(myMaps.ctxDealFile, "这是一个陷于网锁的箱子！", Toast.LENGTH_SHORT);
                             for (int r = 0; r < m_nRows; r++) {
                                 for (int c = 0; c < m_nCols; c++) {
-                                    m_Game.mPathfinder.mark3[r][c] = false;
+                                    m_Game.state.mPathfinder.mark3[r][c] = false;
                                 }
                             }
-                            m_Game.mPathfinder.mark3[m_iR][m_iC] = true;
+                            m_Game.state.mPathfinder.mark3[m_iR][m_iC] = true;
                         } else {
-                            m_Game.mPathfinder.FindBlock(false, m_Game.m_cArray, m_iR, m_iC);   //计算割点，块
-                            m_Game.mPathfinder.boxReachable(false, m_iR, m_iC, m_Game.m_nRow, m_Game.m_nCol);  //计算箱子可达点
+                            m_Game.state.mPathfinder.FindBlock(false, m_Game.state.m_cArray, m_iR, m_iC);   //计算割点，块
+                            m_Game.state.mPathfinder.boxReachable(false, m_iR, m_iC, m_Game.state.m_nRow, m_Game.state.m_nCol);  //计算箱子可达点
                         }
                         m_bBoxTo = true;  //置箱子可达位置提示状态标志
                         m_bManTo = false;
@@ -2451,41 +2451,41 @@ public class myGameViewMap extends View {
                     if (ch == '-' || ch == '.' || //点按了空地
                             (m_bBoxTo && (ch == '@' || ch == '+'))) { //提示状态下点了人
                         if (m_bBoxTo) {//若在箱子可达位置提示状态
-                            if (m_Game.mPathfinder.mark3[m_iR][m_iC]) { //若为箱子的可达位置，自动推箱子的该位置
-                                m_Game.mPathfinder.boxTo(false, click_Box_Row, click_Box_Col, m_iR, m_iC, m_Game.m_nRow, m_Game.m_nCol, m_Game.m_lstMovReDo);
-                                if (m_Game.m_lstMovReDo.size() > 0) {
+                            if (m_Game.state.mPathfinder.mark3[m_iR][m_iC]) { //若为箱子的可达位置，自动推箱子的该位置
+                                m_Game.state.mPathfinder.boxTo(false, click_Box_Row, click_Box_Col, m_iR, m_iC, m_Game.state.m_nRow, m_Game.state.m_nCol, m_Game.state.m_lstMovReDo);
+                                if (m_Game.state.m_lstMovReDo.size() > 0) {
                                     if (mLadder.size() > 0) {  //加上爬阶梯路径
-                                        byte dir = m_Game.m_lstMovReDo.getFirst();  //最后一个动作
+                                        byte dir = m_Game.state.m_lstMovReDo.getFirst();  //最后一个动作
                                         switch (dir) {
                                             case 5:  //左
                                                 if (ladderDir == 1) {                      //左上阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 2) {               //右上阶梯
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 3) {               //右下阶梯
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 }
@@ -2494,33 +2494,33 @@ public class myGameViewMap extends View {
                                                 if (ladderDir == 1) {                      //左上阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 2) {               //右上阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 3) {               //右下阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 }
@@ -2529,33 +2529,33 @@ public class myGameViewMap extends View {
                                                 if (ladderDir == 1) {                      //左上阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 2) {               //右上阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 3) {               //右下阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)4);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)4);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 }
@@ -2564,33 +2564,33 @@ public class myGameViewMap extends View {
                                                 if (ladderDir == 1) {                      //左上阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 2) {               //右上阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)2);
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)2);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else if (ladderDir == 3) {               //右下阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)3);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)3);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 } else {                                   //左下阶梯
                                                     mLadder.removeFirst();
                                                     while (!mLadder.isEmpty()) {
-                                                        m_Game.m_lstMovReDo.offerFirst((byte)1);
-                                                        m_Game.m_lstMovReDo.offerFirst(dir);
+                                                        m_Game.state.m_lstMovReDo.offerFirst((byte)1);
+                                                        m_Game.state.m_lstMovReDo.offerFirst(dir);
                                                         mLadder.removeFirst();
                                                     }
                                                 }
@@ -2598,17 +2598,17 @@ public class myGameViewMap extends View {
                                         }
                                     }
                                 }
-                                m_Game.m_nStep = m_Game.m_lstMovReDo.size();
-                                m_Game.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
+                                m_Game.state.m_nStep = m_Game.state.m_lstMovReDo.size();
+                                m_Game.state.m_bMoved = true;  //有新动作，标示现场（包括答案）是否保存
                                 m_Game.DoEvent(1);
                             } else if (ch == '@' || ch == '+') {//点按了人
                                 m_bManTo = true;
                                 m_bBoxTo = false;
-                                m_Game.mPathfinder.manReachable(false, m_Game.m_cArray, m_Game.m_nRow, m_Game.m_nCol);
+                                m_Game.state.mPathfinder.manReachable(false, m_Game.state.m_cArray, m_Game.state.m_nRow, m_Game.state.m_nCol);
                             }
                         } else { //若仓管员可达，则自动移动
                             if (m_Game.FindPath(m_iR, m_iC, false)) {
-                                m_Game.m_nStep = m_Game.m_lstMovReDo.size();
+                                m_Game.state.m_nStep = m_Game.state.m_lstMovReDo.size();
                                 m_Game.DoEvent(1);
                             }
                         }
@@ -2618,7 +2618,7 @@ public class myGameViewMap extends View {
                                 m_bManTo = false;
                             } else {
                                 m_bManTo = true;
-                                m_Game.mPathfinder.manReachable(false, m_Game.m_cArray, m_Game.m_nRow, m_Game.m_nCol);
+                                m_Game.state.mPathfinder.manReachable(false, m_Game.state.m_cArray, m_Game.state.m_nRow, m_Game.state.m_nCol);
                             }
                         } else if (ch == '#' || ch == '_') {//点按了墙壁
                             m_bBoxTo = false;
@@ -2712,27 +2712,27 @@ public class myGameViewMap extends View {
                 case 1:
                     n = r;
                     r = c;
-                    c = m_Game.m_cArray.length - 1 - n;
+                    c = m_Game.state.m_cArray.length - 1 - n;
                     break;
                 case 2:
-                    r = m_Game.m_cArray.length - 1 - r;
-                    c = m_Game.m_cArray[0].length - 1 - c;
+                    r = m_Game.state.m_cArray.length - 1 - r;
+                    c = m_Game.state.m_cArray[0].length - 1 - c;
                     break;
                 case 3:
                     n = r;
-                    r = m_Game.m_cArray[0].length - 1 - c;
+                    r = m_Game.state.m_cArray[0].length - 1 - c;
                     c = n;
                     break;
                 case 4:
-                    c = m_Game.m_cArray[0].length - 1 - c;
+                    c = m_Game.state.m_cArray[0].length - 1 - c;
                     break;
                 case 5:
                     n = r;
-                    r = m_Game.m_cArray[0].length - 1 - c;
-                    c = m_Game.m_cArray.length - 1 - n;
+                    r = m_Game.state.m_cArray[0].length - 1 - c;
+                    c = m_Game.state.m_cArray.length - 1 - n;
                     break;
                 case 6:
-                    r = m_Game.m_cArray.length - 1 - r;
+                    r = m_Game.state.m_cArray.length - 1 - r;
                     break;
                 case 7:
                     n = r;

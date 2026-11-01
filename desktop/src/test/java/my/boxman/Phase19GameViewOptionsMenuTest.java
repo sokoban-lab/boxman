@@ -210,7 +210,7 @@ public class Phase19GameViewOptionsMenuTest {
         myMaps.m_Sets[10] = 4;
         win = new myGameView();
         win.bt_IM.setChecked(false);
-        for (int i = 0; i < 30; i++) win.m_lstMovReDo.offer((byte) 3);
+        for (int i = 0; i < 30; i++) win.state.m_lstMovReDo.offer((byte) 3);
 
         myGameView.GameButton redo = win.bt_ReDo;
         SwingUtilities.invokeAndWait(() -> redo.dispatchEvent(new MouseEvent(redo,
@@ -224,18 +224,18 @@ public class Phase19GameViewOptionsMenuTest {
         // （实测：常态下长按在 502~528ms 生效，余量只有 148ms 上下。）
         // 这里改成「轮询到长按真的生效」再松手 —— 判据是用例真正关心的那个状态。
         long longPressDeadline = System.currentTimeMillis() + 5000;
-        while (!win.m_bYanshi && System.currentTimeMillis() < longPressDeadline) {
+        while (!win.state.m_bYanshi && System.currentTimeMillis() < longPressDeadline) {
             Thread.sleep(5);
         }
         assertTrue("按住「前进」500ms 应触发正向演示（长按未生效，余量被 EDT 挤掉了？）",
-                win.m_bYanshi);
+                win.state.m_bYanshi);
 
         SwingUtilities.invokeAndWait(() -> redo.dispatchEvent(new MouseEvent(redo,
                 MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), 0,
                 5, 5, 1, false, MouseEvent.BUTTON1)));
 
-        assertTrue("松开长按的前进按钮后，答案演示应继续", win.m_bYanshi);
-        assertTrue("演示还应保留待执行动作", win.m_nStep > 0);
+        assertTrue("松开长按的前进按钮后，答案演示应继续", win.state.m_bYanshi);
+        assertTrue("演示还应保留待执行动作", win.state.m_nStep > 0);
     }
 
     @Test
@@ -261,8 +261,8 @@ public class Phase19GameViewOptionsMenuTest {
 
     @Test
     public void testPrepareImportClearsActionReadyAndSetsRecordingBegin() {
-        win.m_lstMovUnDo.add((byte) 1);
-        win.m_lstMovUnDo.add((byte) 4);
+        win.state.m_lstMovUnDo.add((byte) 1);
+        win.state.m_lstMovUnDo.add((byte) 4);
         myMaps.m_ActionIsRedy = true;
         myMaps.m_nRecording_Bggin = -1;
 
@@ -270,7 +270,7 @@ public class Phase19GameViewOptionsMenuTest {
 
         assertFalse("「导入」应把 m_ActionIsRedy 清掉", myMaps.m_ActionIsRedy);
         assertEquals("正推录制起始点应等于当前 undo 栈深度",
-                win.m_lstMovUnDo.size(), myMaps.m_nRecording_Bggin);
+                win.state.m_lstMovUnDo.size(), myMaps.m_nRecording_Bggin);
     }
 
     @Test
@@ -279,7 +279,7 @@ public class Phase19GameViewOptionsMenuTest {
         myMaps.m_ActionIsTrun = false;
         myMaps.sAction = new String[]{"{r}~"};
         myMaps.m_ActionIsRedy = true;
-        int initialCol = win.m_nCol;
+        int initialCol = win.state.m_nCol;
 
         win.processImportedAction();
 
@@ -296,7 +296,7 @@ public class Phase19GameViewOptionsMenuTest {
 
         assertNull("导入动作任务应完成（等了 " + (System.currentTimeMillis() - started) + "ms）",
                 win.mMicroTask);
-        assertEquals("导入的 r 应推动仓管员向右移动一格", initialCol + 1, win.m_nCol);
+        assertEquals("导入的 r 应推动仓管员向右移动一格", initialCol + 1, win.state.m_nCol);
     }
 
     @Test
@@ -310,8 +310,8 @@ public class Phase19GameViewOptionsMenuTest {
         win.processImportedAction();
 
         assertFalse("逆推动作交接后应清除待执行标记", myMaps.m_ActionIsRedy);
-        assertEquals("应按 [x,y] 坐标放置仓管员后执行 r", 1, win.m_nRow2);
-        assertEquals("逆推的 r 应移动一格", 2, win.m_nCol2);
+        assertEquals("应按 [x,y] 坐标放置仓管员后执行 r", 1, win.state.m_nRow2);
+        assertEquals("逆推的 r 应移动一格", 2, win.state.m_nCol2);
     }
 
     @Test
@@ -325,8 +325,8 @@ public class Phase19GameViewOptionsMenuTest {
         win.processImportedAction();
 
         assertFalse("逆推动作交接后应清除待执行标记", myMaps.m_ActionIsRedy);
-        assertEquals("应识别 \"[2, 2]\" 的坐标", 1, win.m_nRow2);
-        assertEquals("逆推的 r 应移动一格", 2, win.m_nCol2);
+        assertEquals("应识别 \"[2, 2]\" 的坐标", 1, win.state.m_nRow2);
+        assertEquals("逆推的 r 应移动一格", 2, win.state.m_nCol2);
     }
 
     @Test
@@ -363,34 +363,34 @@ public class Phase19GameViewOptionsMenuTest {
 
         assertEquals("标尺数组长度应为 行×列",
                 myMaps.curMap.Rows * myMaps.curMap.Cols, d.rule.length);
-        assertEquals("箱子编号数组长度应为目标数", win.m_nGoals, d.boxNum.length);
-        assertEquals("是否答案 == 目标完成", win.m_nGoals_OK == win.m_nGoals, d.isAns);
-        assertEquals("GIF 起点应带过去", win.m_Gif_Start, d.gifStart);
+        assertEquals("箱子编号数组长度应为目标数", win.state.m_nGoals, d.boxNum.length);
+        assertEquals("是否答案 == 目标完成", win.state.m_nGoals_OK == win.state.m_nGoals, d.isAns);
+        assertEquals("GIF 起点应带过去", win.state.m_Gif_Start, d.gifStart);
         assertEquals("「导入/YASS」标记应带过去", win.m_imPort_YASS, d.importYass);
     }
 
     @Test
     public void testBuildExportDataEmitsLurdForForwardMoves() {
-        win.m_lstMovUnDo.clear();
+        win.state.m_lstMovUnDo.clear();
         // 1=l 2=u 3=r 4=d 5=L 6=U 7=R 8=D
-        win.m_lstMovUnDo.add((byte) 1);
-        win.m_lstMovUnDo.add((byte) 4);
-        win.m_lstMovUnDo.add((byte) 3);
-        win.m_lstMovUnDo.add((byte) 6);
+        win.state.m_lstMovUnDo.add((byte) 1);
+        win.state.m_lstMovUnDo.add((byte) 4);
+        win.state.m_lstMovUnDo.add((byte) 3);
+        win.state.m_lstMovUnDo.add((byte) 6);
 
         assertEquals("正推动作应逐字节译成 lurd 字母", "ldrU", win.buildExportData().lurd);
     }
 
     @Test
     public void testBuildExportDataAppendsBackwardSectionWhenNotSolved() {
-        win.m_lstMovUnDo.clear();
-        win.m_lstMovUnDo2.clear();
-        win.m_nGoals_OK = 0;            // 强制 isANS == false
-        win.m_nGoals = Math.max(1, win.m_nGoals);
-        win.m_nCol0 = 2;
-        win.m_nRow0 = 5;
-        win.m_lstMovUnDo.add((byte) 1);            // l
-        win.m_lstMovUnDo2.add((byte) 3);           // r
+        win.state.m_lstMovUnDo.clear();
+        win.state.m_lstMovUnDo2.clear();
+        win.state.m_nGoals_OK = 0;            // 强制 isANS == false
+        win.state.m_nGoals = Math.max(1, win.state.m_nGoals);
+        win.state.m_nCol0 = 2;
+        win.state.m_nRow0 = 5;
+        win.state.m_lstMovUnDo.add((byte) 1);            // l
+        win.state.m_lstMovUnDo2.add((byte) 3);           // r
 
         String lurd = win.buildExportData().lurd;
         assertEquals("未解关时应追加逆推段：[列+1,行+1] + 动作（先列后行）",

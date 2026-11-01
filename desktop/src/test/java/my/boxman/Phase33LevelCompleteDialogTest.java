@@ -221,10 +221,10 @@ public class Phase33LevelCompleteDialogTest {
     public void completingALevelShowsTheDialogExactlyOnce() throws Exception {
         Assume.assumeFalse("需要图形环境", GraphicsEnvironment.isHeadless());
 
-        win.m_bMoved = true;
+        win.state.m_bMoved = true;
         win.mMap.d_Moves = win.mMap.m_PicWidth;   // 已停稳，下一拍就会真正执行动作
-        win.m_lstMovReDo.offer(PUSH_RIGHT);
-        win.m_nStep = 1;
+        win.state.m_lstMovReDo.offer(PUSH_RIGHT);
+        win.state.m_nStep = 1;
 
         // 一直推进动画，直到「恭喜过关！」框弹出来
         int tick = 0;
@@ -358,15 +358,15 @@ public class Phase33LevelCompleteDialogTest {
         win = g;                                   // 交给 @After 收尾
         g.dialogShower = dlg -> dlg.setVisible(true);   // 真实：非模态，立刻返回
 
-        final String before = new String(g.m_cArray[1]);
+        final String before = new String(g.state.m_cArray[1]);
 
         // 等价于在棋盘上往左划一下：排队两次「推箱向左」（'L' = 5）
         SwingUtilities.invokeAndWait(() -> {
             g.bt_IM.setChecked(false);
             g.mMap.d_Moves = g.mMap.m_PicWidth;    // 已停稳
-            g.m_lstMovReDo.offer((byte) 5);
-            g.m_lstMovReDo.offer((byte) 5);
-            g.m_nStep = 2;
+            g.state.m_lstMovReDo.offer((byte) 5);
+            g.state.m_lstMovReDo.offer((byte) 5);
+            g.state.m_nStep = 2;
             g.DoEvent(1);
         });
 
@@ -378,9 +378,9 @@ public class Phase33LevelCompleteDialogTest {
         // 永远早退，表现就是用户报的「点击撤销不会撤销」。见
         // rearmingFromInsideTheCallbackAlwaysDeliversTheNextTick()。
         assertTrue("动画循环停下来后必须把 m_bBusing 复位 —— 否则 bt_UnDo 会永远早退，"
-                        + "表现就是「点击撤销不会撤销」（busy=" + g.m_bBusing
-                        + " nStep=" + g.m_nStep + "）",
-                awaitUntil(() -> !g.m_bBusing, 10000));
+                        + "表现就是「点击撤销不会撤销」（busy=" + g.state.m_bBusing
+                        + " nStep=" + g.state.m_nStep + "）",
+                awaitUntil(() -> !g.state.m_bBusing, 10000));
         assertTrue("EDT 必须保持响应（没卡死）", edtRespondsWithin(3000));
 
         // 点「撤销移动」—— 与用户操作完全同一条路径
@@ -389,13 +389,13 @@ public class Phase33LevelCompleteDialogTest {
         assertFalse("点「撤销移动」后提示框必须消失（原版按钮无条件 dismiss）",
                 g.lockDlg.isVisible());
         assertTrue("点「撤销移动」后应当真的开始撤销（m_lstMovUnDo 缩短）",
-                awaitUntil(() -> g.m_lstMovUnDo.size() < 2, 10000));
+                awaitUntil(() -> g.state.m_lstMovUnDo.size() < 2, 10000));
         assertTrue("撤销动画应当把箱子退回原位（row1 恢复成 " + before + "），实际："
-                        + new String(g.m_cArray[1]),
-                awaitUntil(() -> before.equals(new String(g.m_cArray[1])), 10000));
+                        + new String(g.state.m_cArray[1]),
+                awaitUntil(() -> before.equals(new String(g.state.m_cArray[1])), 10000));
         assertTrue("撤销之后 EDT 仍要响应", edtRespondsWithin(3000));
         assertTrue("撤销动画跑完后忙标志应当复位（否则下一次撤销又会被早退掉）",
-                awaitUntil(() -> !g.m_bBusing, 10000));
+                awaitUntil(() -> !g.state.m_bBusing, 10000));
     }
 
     /**
@@ -436,16 +436,16 @@ public class Phase33LevelCompleteDialogTest {
         SwingUtilities.invokeAndWait(() -> {
             g.bt_IM.setChecked(false);
             g.mMap.d_Moves = g.mMap.m_PicWidth;
-            g.m_bMoved = true;
-            g.m_lstMovReDo.offer(PUSH_RIGHT);
-            g.m_nStep = 1;
+            g.state.m_bMoved = true;
+            g.state.m_lstMovReDo.offer(PUSH_RIGHT);
+            g.state.m_nStep = 1;
             g.DoEvent(1);
         });
 
         assertTrue("通关后应弹出「恭喜过关！」",
                 awaitUntil(() -> g.AotoNextDlg.isVisible(), 10000));
         assertTrue("通关后动画必须停稳（m_bBusing 复位）",
-                awaitUntil(() -> !g.m_bBusing, 10000));
+                awaitUntil(() -> !g.state.m_bBusing, 10000));
 
         // ② 点「是」→ 跳到下一个未解关卡
         SwingUtilities.invokeAndWait(() -> buttonsOf(g.AotoNextDlg).get(1).doClick());
@@ -455,28 +455,28 @@ public class Phase33LevelCompleteDialogTest {
                         + "每点一次就往后跳一个关卡（用户报的就是这个）",
                 g.AotoNextDlg.isVisible());
         assertFalse("刚换完关卡不该弹「死锁移动」", g.lockDlg.isVisible());
-        assertFalse("换关之后忙标志必须已复位 —— 否则新关卡上一按撤销就早退", g.m_bBusing);
+        assertFalse("换关之后忙标志必须已复位 —— 否则新关卡上一按撤销就早退", g.state.m_bBusing);
 
         // ③ 在新关卡走两步死锁，弹提示 → 必须停稳 → 点「撤销移动」要真的撤销
-        final String before = new String(g.m_cArray[1]);
+        final String before = new String(g.state.m_cArray[1]);
         SwingUtilities.invokeAndWait(() -> {
             g.bt_IM.setChecked(false);
             g.mMap.d_Moves = g.mMap.m_PicWidth;
-            g.m_lstMovReDo.offer((byte) 5);
-            g.m_lstMovReDo.offer((byte) 5);
-            g.m_nStep = 2;
+            g.state.m_lstMovReDo.offer((byte) 5);
+            g.state.m_lstMovReDo.offer((byte) 5);
+            g.state.m_nStep = 2;
             g.DoEvent(1);
         });
 
         assertTrue("第 2 关走到死锁应当弹提示", awaitUntil(() -> g.lockDlg.isVisible(), 10000));
         assertTrue("提示弹出后动画必须停稳 —— 否则就是用户报的「点撤销没反应」",
-                awaitUntil(() -> !g.m_bBusing, 10000));
+                awaitUntil(() -> !g.state.m_bBusing, 10000));
 
         SwingUtilities.invokeAndWait(() -> buttonsOf(g.lockDlg).get(1).doClick());
 
         assertTrue("点「撤销移动」必须真的把箱子退回原位，实际："
-                        + new String(g.m_cArray[1]),
-                awaitUntil(() -> before.equals(new String(g.m_cArray[1])), 10000));
+                        + new String(g.state.m_cArray[1]),
+                awaitUntil(() -> before.equals(new String(g.state.m_cArray[1])), 10000));
         assertTrue("全程结束后 EDT 仍要响应", edtRespondsWithin(3000));
     }
 
@@ -538,18 +538,18 @@ public class Phase33LevelCompleteDialogTest {
         SwingUtilities.invokeAndWait(() -> {
             g.bt_IM.setChecked(false);
             g.mMap.d_Moves = g.mMap.m_PicWidth;
-            g.m_lstMovReDo.offer((byte) 5);
-            g.m_lstMovReDo.offer((byte) 5);
-            g.m_nStep = 2;
+            g.state.m_lstMovReDo.offer((byte) 5);
+            g.state.m_lstMovReDo.offer((byte) 5);
+            g.state.m_nStep = 2;
             g.DoEvent(1);
         });
 
         assertTrue("提示框应当弹出（说明动画确实跑到了死锁判定那一拍）",
                 awaitUntil(() -> !shown.isEmpty(), 10000));
         assertTrue("弹框把 EDT 拖住之后，下一拍仍必须到达并把 m_bBusing 复位 —— "
-                        + "否则 bt_UnDo 永远早退（busy=" + g.m_bBusing
-                        + " nStep=" + g.m_nStep + "）",
-                awaitUntil(() -> !g.m_bBusing, 10000));
+                        + "否则 bt_UnDo 永远早退（busy=" + g.state.m_bBusing
+                        + " nStep=" + g.state.m_nStep + "）",
+                awaitUntil(() -> !g.state.m_bBusing, 10000));
         assertTrue("EDT 仍要响应", edtRespondsWithin(3000));
     }
 

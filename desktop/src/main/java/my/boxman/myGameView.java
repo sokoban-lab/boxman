@@ -27,7 +27,7 @@ import my.boxman.compat.HoloContent;
 import my.boxman.compat.HoloMessageDialog;
 import my.boxman.compat.HoloPopupMenu;
 
-public class myGameView extends JFrame implements LockBoard {
+public class myGameView extends JFrame {
 
     /**
      * 底栏按钮 = 原版 {@code res/values/style.xml} 的 {@code tab_style}。
@@ -94,7 +94,6 @@ public class myGameView extends JFrame implements LockBoard {
     javax.swing.Timer myTimer4;
 
     public myGameViewMap mMap;  // 地图
-    public MyPathfinder mPathfinder;  // 探路者
 
     // 底行按钮
     public GameButton bt_UnDo = null;
@@ -110,91 +109,18 @@ public class myGameView extends JFrame implements LockBoard {
     /** 「更多」按钮弹出的选项菜单（原版 {@code res/menu/player.xml}），见 {@link #openOptionsMenu()}。 */
     private JPopupMenu optionsMenu;
 
-    // 正推，目标数、完成数、仓管员初始位置
-    public int m_nGoals;
-    public int m_nGoals_OK;
-    public int m_nRow, m_nCol;
-    // 逆推，目标数、完成数、仓管员初始位置
-    public int m_nGoals_2;
-    public int m_nGoals_OK_2;
-    public int m_nRow2;
-    public int m_nCol2;
-    public int m_nRow0;  // 逆推时，记录仓管员初始占位，周转用
-    public int m_nCol0;
-    public int m_iR9, m_iC9, m_iR10, m_iC10; // 正逆推时，箱子停止的位置，判断死锁移动时使用
-    public int b_nRow = -1, b_nCol = -1, oldDir; // 动画中的箱子
+    // 动画中的箱子与方向
+    public int oldDir;
     public final int m_iSleep[] = {50, 17, 10, 5, 2}; // 移动速度
     public final String m_sSleep[] = {"最快", "较快", "中速", "较慢", "最慢"}; // 移动速度
 
-    public LinkedList<Byte> m_lstMovedHistory = new LinkedList<Byte>();  // 临时栈，记录当前点前的动作，MacroDebug 会用的到
-
-    public LinkedList<Byte> m_lstMovUnDo;  // unDo 栈
-    public LinkedList<Byte> m_lstMovReDo;  // reDo 栈
-
-    public LinkedList<Byte> m_lstMovUnDo2;  // 逆推 unDo 栈
-    public LinkedList<Byte> m_lstMovReDo2;  // 逆推 reDo 栈
-
-    public char[][] mArray9;  // 检查死锁用的临时地图（空地图），正推根据目标数识别死锁时，也会用到
-    public MyPathfinder mPF;  // 检查死锁用的探路者，正推根据目标数识别死锁时，也会用到
-    public boolean[][] mark15, mark16, mark7, mark8, mark11, mark12, mark44;  // 15、为逆推死点；16、为正推网锁点；7、为正推箱子初位；8、为正推初态地板；11、为哪个箱子能动或未动过；12、为正推未被使用过的地板；44、是否显示标尺
-    public short[][] mark14;  // 14、为逆推可推的点（其它为推死的点）
-    public byte[][] mark41;  // 网锁标志
-
-    public int m_Gif_Start = 0;  // 导出 GIF 的起点
-    public int m_nStep, m_nLastSteps = -1;  // 执行"推"、"移"的步数
-    public boolean m_bYanshi, m_bYanshi2;  // 是否演示
+    public final GameState state = new GameState();
     public String m_imPort_YASS;  // 是否做过动作“导入”或“YASS”过动作
-    public int m_iStep[] = new int[4];    // 记录"推"、"移"的步数
-    public boolean m_bACT_ERROR;  // 执行动作时是否遇到错误
-    public boolean m_bACT_IgnoreCase;  // 执行动作时是否忽略大小写
-    public boolean m_bMoved;  // 有新动作
-    public boolean m_bBusing;  // 忙中
-    public boolean m_bPush;  // 推
-    public boolean m_bNetLock;  // 网锁
 
     // 四邻：左、右、上、下
     final byte[] dr4 = {0, 0, -1, 1};
     final byte[] dc4 = {-1, 1, 0, 0};
 
-    public short[][] m_iBoxNum;  // 迷宫箱子编号（人为）
-    public short[][] m_iBoxNum2;  // 迷宫箱子自动（固定）编号
-    public char[][] m_cArray0;  // 迷宫初态
-    public char[][] m_cArray;  // 迷宫
-    public char[][] bk_cArray;  // 逆推迷宫
-
-    public char[][] ls_bk_cArray;  // 导入时用的临时逆推迷宫
-
-    public byte[][] m_selArray;  // 迷宫选择
-    public byte[][] bk_selArray;  // 逆推迷宫选择
-
-    public DiagonalLock closedDiagonalLock;
-    public FreezeLock freezeDeadlock;
-    public byte[][] m_Freeze;  // 检查冻结时使用的临时数字
-
-    @Override
-    public char[][] cells() {
-        return m_cArray;
-    }
-
-    @Override
-    public byte[][] freezeMarks() {
-        return m_Freeze;
-    }
-
-    @Override
-    public int playerRow() {
-        return m_nRow;
-    }
-
-    @Override
-    public int playerCol() {
-        return m_nCol;
-    }
-
-    public int m_nRow3;  // 逆推过关时用，记录仓管员正推地图之初始占位
-    public int m_nCol3;
-    public int m_nRow4;  // 导入用，记录仓管员逆推地图之初始占位
-    public int m_nCol4;
     public int m_nItemSelect;  // 对话框中的出item选择前的记忆
 
     int MyMINUTE;   // 记忆时钟的分钟数，用于更新背景时间
@@ -346,7 +272,7 @@ public class myGameView extends JFrame implements LockBoard {
                 bt_TR.setChecked(false);
                 bt_TR.setText(myMaps.m_nTrun + " 转");
                 initMap();
-                ls_bk_cArray = bk_cArray;
+                state.ls_bk_cArray = state.bk_cArray;
             } else {
                 MyToast.showToast(this, "后面没有未解关卡！", MyToast.LENGTH_SHORT);
             }
@@ -411,79 +337,79 @@ public class myGameView extends JFrame implements LockBoard {
             StopMicro();
             bt_Sel.setChecked(false);
             if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
-            m_bNetLock = false;
-            m_nStep = 0;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
+            state.m_bNetLock = false;
+            state.m_nStep = 0;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
             mMap.m_lChangeBK = false;
-            m_bACT_ERROR = false;
+            state.m_bACT_ERROR = false;
             mMap.invalidate();
-            if (m_bBusing) return;
+            if (state.m_bBusing) return;
 
             if (bt_BK.isChecked()) {
-                if (m_lstMovUnDo2.isEmpty()) {
+                if (state.m_lstMovUnDo2.isEmpty()) {
                     MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                 } else {
-                    if (myMaps.m_Sets[23] == 1) m_nStep = 1;
-                    else m_nStep = getStep(m_lstMovUnDo2);
+                    if (myMaps.m_Sets[23] == 1) state.m_nStep = 1;
+                    else state.m_nStep = state.getStep(state.m_lstMovUnDo2);
                     UpData4(1);
                 }
             } else {
                 if (myMaps.isMacroDebug) {
                     levelReset(false);
                     if (myMaps.m_ActionIsPos) {
-                        Iterator<Byte> myItr = m_lstMovedHistory.iterator();
-                        m_lstMovReDo.clear();
-                        m_lstMovUnDo.clear();
+                        Iterator<Byte> myItr = state.m_lstMovedHistory.iterator();
+                        state.m_lstMovReDo.clear();
+                        state.m_lstMovUnDo.clear();
                         while (myItr.hasNext()) {
-                            m_lstMovReDo.offer(myItr.next());
-                            m_nStep = 1;
+                            state.m_lstMovReDo.offer(myItr.next());
+                            state.m_nStep = 1;
                             reDo1();
                         }
                         mMap.invalidate();
                     }
                     mMap.curMoves = 0;
 
-                    m_nMacro_Row = m_nRow;
-                    m_nMacro_Col = m_nCol;
+                    m_nMacro_Row = state.m_nRow;
+                    m_nMacro_Col = state.m_nCol;
                     int len = mMap.myMacro.size();
                     if (len > 1) {
                         mMap.myMacro.remove(len - 1);
                         for (int k = 0; k < len - 2; k++) {
                             myDo_Block(mMap.myMacro.get(k), mMap.myMacro.get(k), true, false);
                         }
-                        m_lstMovReDo.clear();
+                        state.m_lstMovReDo.clear();
                         mMap.invalidate();
                     } else {
                         MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                     }
                 } else {
-                    if (m_lstMovUnDo.isEmpty()) {
+                    if (state.m_lstMovUnDo.isEmpty()) {
                         MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                     } else {
-                        if (myMaps.m_Sets[23] == 1) m_nStep = 1;
+                        if (myMaps.m_Sets[23] == 1) state.m_nStep = 1;
                         else {
-                            if (m_nLastSteps >= 0 && m_nLastSteps <= m_lstMovUnDo.size()) m_nStep = m_lstMovUnDo.size() - m_nLastSteps;
-                            else m_nStep = getStep2(m_lstMovUnDo);
+                            if (state.m_nLastSteps >= 0 && state.m_nLastSteps <= state.m_lstMovUnDo.size()) state.m_nStep = state.m_lstMovUnDo.size() - state.m_nLastSteps;
+                            else state.m_nStep = state.getStep2(state.m_lstMovUnDo);
                         }
-                        m_nLastSteps = -1;
+                        state.m_nLastSteps = -1;
                         UpData2(1);
                     }
                 }
             }
-            m_bBusing = false;
+            state.m_bBusing = false;
         });
 
         attachLongPress(bt_UnDo, () -> {
             StopMicro();
             bt_Sel.setChecked(false);
             if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
-            m_bNetLock = false;
-            m_nStep = 0;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
+            state.m_bNetLock = false;
+            state.m_nStep = 0;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
             mMap.m_lChangeBK = false;
-            m_bACT_ERROR = false;
+            state.m_bACT_ERROR = false;
             mMap.d_Moves = mMap.m_PicWidth;
             mMap.invalidate();
 
@@ -495,12 +421,12 @@ public class myGameView extends JFrame implements LockBoard {
                 levelReset(false);
 
                 if (myMaps.m_ActionIsPos && myMaps.isMacroDebug) {
-                    Iterator<Byte> myItr = m_lstMovedHistory.iterator();
-                    m_lstMovReDo.clear();
-                    m_lstMovUnDo.clear();
+                    Iterator<Byte> myItr = state.m_lstMovedHistory.iterator();
+                    state.m_lstMovReDo.clear();
+                    state.m_lstMovUnDo.clear();
                     while (myItr.hasNext()) {
-                        m_lstMovReDo.offer(myItr.next());
-                        m_nStep = 1;
+                        state.m_lstMovReDo.offer(myItr.next());
+                        state.m_nStep = 1;
                         reDo1();
                     }
                 }
@@ -509,7 +435,7 @@ public class myGameView extends JFrame implements LockBoard {
                 mMap.myMacroInf = "";
             }
             mMap.curMoves = 0;
-            m_bBusing = false;
+            state.m_bBusing = false;
             mMap.invalidate();
         });
 
@@ -518,68 +444,68 @@ public class myGameView extends JFrame implements LockBoard {
             StopMicro();
             bt_Sel.setChecked(false);
             if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
-            m_bNetLock = false;
-            m_nStep = 0;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
+            state.m_bNetLock = false;
+            state.m_nStep = 0;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
             mMap.m_lChangeBK = false;
-            m_bACT_ERROR = false;
+            state.m_bACT_ERROR = false;
             mMap.invalidate();
-            if (m_bBusing) return;
+            if (state.m_bBusing) return;
 
             if (bt_BK.isChecked()) {
-                if (m_lstMovReDo2.isEmpty()) {
+                if (state.m_lstMovReDo2.isEmpty()) {
                     MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                 } else {
-                    if (myMaps.m_Sets[23] == 1) m_nStep = 1;
-                    else m_nStep = getStep2(m_lstMovReDo2);
+                    if (myMaps.m_Sets[23] == 1) state.m_nStep = 1;
+                    else state.m_nStep = state.getStep2(state.m_lstMovReDo2);
                     UpData3(1);
                 }
             } else {
                 if (myMaps.isMacroDebug) {
                     if (mMap.myMacro.get(mMap.myMacro.size() - 1) < myMaps.sAction.length) {
                         myDo_Block(mMap.myMacro.get(mMap.myMacro.size() - 1), mMap.myMacro.get(mMap.myMacro.size() - 1), false, false);
-                        m_lstMovReDo.clear();
+                        state.m_lstMovReDo.clear();
                         mMap.invalidate();
                     } else {
                         MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                     }
                 } else {
-                    if (m_lstMovReDo.isEmpty()) {
+                    if (state.m_lstMovReDo.isEmpty()) {
                         MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                     } else {
-                        if (myMaps.m_Sets[23] == 1) m_nStep = 1;
-                        else m_nStep = getStep(m_lstMovReDo);
+                        if (myMaps.m_Sets[23] == 1) state.m_nStep = 1;
+                        else state.m_nStep = state.getStep(state.m_lstMovReDo);
                         mMap.Box_Row0 = -1;
-                        m_nLastSteps = m_lstMovUnDo.size();
+                        state.m_nLastSteps = state.m_lstMovUnDo.size();
                         UpData1(1);
                     }
                 }
             }
-            m_bBusing = false;
+            state.m_bBusing = false;
         });
 
         attachLongPress(bt_ReDo, () -> {
             StopMicro();
             bt_Sel.setChecked(false);
             if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
-            m_bNetLock = false;
-            m_nStep = 0;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
+            state.m_bNetLock = false;
+            state.m_nStep = 0;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
             mMap.m_lChangeBK = false;
-            m_bACT_ERROR = false;
+            state.m_bACT_ERROR = false;
             mMap.invalidate();
 
             if (bt_BK.isChecked()) {
-                if (m_lstMovReDo2.isEmpty()) {
+                if (state.m_lstMovReDo2.isEmpty()) {
                     MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                 } else {
                     MyToast.showToast(this, "进至尾！", MyToast.LENGTH_SHORT);
-                    if (m_lstMovUnDo2.isEmpty()) goHome();
-                    m_nStep = m_lstMovReDo2.size();
-                    m_bYanshi = false;
-                    m_bYanshi2 = true;
+                    if (state.m_lstMovUnDo2.isEmpty()) goHome();
+                    state.m_nStep = state.m_lstMovReDo2.size();
+                    state.m_bYanshi = false;
+                    state.m_bYanshi2 = true;
                     mMap.curMoves = 0;
                     UpData3(1);
                 }
@@ -587,27 +513,27 @@ public class myGameView extends JFrame implements LockBoard {
                 if (myMaps.isMacroDebug) {
                     if (mMap.myMacro.get(mMap.myMacro.size() - 1) < myMaps.sAction.length) {
                         myDo_Block(mMap.myMacro.get(mMap.myMacro.size() - 1), myMaps.sAction.length - 1, false, false);
-                        m_lstMovReDo.clear();
+                        state.m_lstMovReDo.clear();
                         mMap.invalidate();
                     } else {
                         MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                     }
                 } else {
-                    if (m_lstMovReDo.isEmpty()) {
+                    if (state.m_lstMovReDo.isEmpty()) {
                         MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
                     } else {
                         MyToast.showToast(this, "正向演示！", MyToast.LENGTH_SHORT);
-                        m_nStep = m_lstMovReDo.size();
+                        state.m_nStep = state.m_lstMovReDo.size();
                         mMap.Box_Row0 = -1;
-                        m_bYanshi = true;
-                        m_bYanshi2 = false;
+                        state.m_bYanshi = true;
+                        state.m_bYanshi2 = false;
                         mMap.curMoves = 0;
-                        m_nLastSteps = -1;
+                        state.m_nLastSteps = -1;
                         UpData1(1);
                     }
                 }
             }
-            m_bBusing = false;
+            state.m_bBusing = false;
         });
 
         // 瞬移
@@ -634,24 +560,24 @@ public class myGameView extends JFrame implements LockBoard {
             if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
             myMaps.isRecording = false;
             mMap.d_Moves = mMap.m_PicWidth;
-            m_bBusing = false;
-            m_nStep = 0;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
-            m_bACT_ERROR = false;
+            state.m_bBusing = false;
+            state.m_nStep = 0;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
+            state.m_bACT_ERROR = false;
             if (bt_BK.isChecked()) {
                 bt_BK.setCheckedBackground(true);    // 原版：setBackgroundColor(0xff445566)
-                if (m_nRow2 < 0 || m_nCol2 < 0) {
-                    mMap.m_iR = m_nRow2;
-                    mMap.m_iC = m_nCol2;
+                if (state.m_nRow2 < 0 || state.m_nCol2 < 0) {
+                    mMap.m_iR = state.m_nRow2;
+                    mMap.m_iC = state.m_nCol2;
                     MyToast.showToast(this, "需要给出仓管员的位置！", MyToast.LENGTH_SHORT);
                 }
             } else {
                 bt_BK.setCheckedBackground(false);   // 原版：setBackgroundColor(0xff778899)
-                mMap.m_iR = m_nRow;
-                mMap.m_iC = m_nCol;
+                mMap.m_iR = state.m_nRow;
+                mMap.m_iC = state.m_nCol;
             }
-            m_bNetLock = false;
+            state.m_bNetLock = false;
             mMap.invalidate();
         });
 
@@ -660,11 +586,11 @@ public class myGameView extends JFrame implements LockBoard {
         bt_Sel.addItemListener(e -> {
             StopMicro();
             mMap.d_Moves = mMap.m_PicWidth;
-            m_nStep = 0;
+            state.m_nStep = 0;
             if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
-            m_bBusing = false;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
+            state.m_bBusing = false;
             mMap.m_lGoto = false;
             mMap.m_lGoto2 = false;
             mMap.m_lParityBrightnessShade = false;
@@ -675,11 +601,11 @@ public class myGameView extends JFrame implements LockBoard {
             mMap.m_Count[3] = 0;
             mMap.m_Count[4] = 0;
             mMap.m_Count[5] = 0;
-            if (m_cArray != null) {
-                for (int i = 0; i < m_cArray.length; i++) {
-                    for (int j = 0; j < m_cArray[0].length; j++) {
-                        m_selArray[i][j] = 0;
-                        bk_selArray[i][j] = 0;
+            if (state.m_cArray != null) {
+                for (int i = 0; i < state.m_cArray.length; i++) {
+                    for (int j = 0; j < state.m_cArray[0].length; j++) {
+                        state.m_selArray[i][j] = 0;
+                        state.bk_selArray[i][j] = 0;
                     }
                 }
             }
@@ -693,7 +619,7 @@ public class myGameView extends JFrame implements LockBoard {
             } else {
                 bt_Sel.setCheckedBackground(false);  // 原版：setBackgroundColor(0xff778899)
             }
-            m_bNetLock = false;
+            state.m_bNetLock = false;
             mMap.m_lChangeBK = false;
             mMap.invalidate();
         });
@@ -727,15 +653,15 @@ public class myGameView extends JFrame implements LockBoard {
             StopMicro();
             bt_Sel.setChecked(false);
             if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
-            m_bNetLock = false;
+            state.m_bNetLock = false;
             mMap.m_lChangeBK = false;
-            m_bACT_ERROR = false;
+            state.m_bACT_ERROR = false;
             mMap.invalidate();
             mMap.d_Moves = mMap.m_PicWidth;
-            m_nStep = 0;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
-            m_bBusing = false;
+            state.m_nStep = 0;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
+            state.m_bBusing = false;
 
             openOptionsMenu();
         });
@@ -749,17 +675,17 @@ public class myGameView extends JFrame implements LockBoard {
         StopMicro();
         bt_Sel.setChecked(false);
         if (mMap.m_lShowAnsInf) mMap.m_lShowAnsInf = false;
-        m_bNetLock = false;
+        state.m_bNetLock = false;
         mMap.m_lChangeBK = false;
-        m_bACT_ERROR = false;
+        state.m_bACT_ERROR = false;
         mMap.d_Moves = mMap.m_PicWidth;
-        m_nStep = 0;
-        m_bYanshi = false;
-        m_bYanshi2 = false;
-        m_bBusing = false;
+        state.m_nStep = 0;
+        state.m_bYanshi = false;
+        state.m_bYanshi2 = false;
+        state.m_bBusing = false;
         mMap.invalidate();
 
-        if (m_bMoved && ((m_lstMovUnDo != null && m_lstMovUnDo.size() > 0) || (m_lstMovUnDo2 != null && m_lstMovUnDo2.size() > 0))) {
+        if (state.m_bMoved && ((state.m_lstMovUnDo != null && state.m_lstMovUnDo.size() > 0) || (state.m_lstMovUnDo2 != null && state.m_lstMovUnDo2.size() > 0))) {
             // 原版 exitDlg.show()（myGameView.java:1726 / 4176 / 5158）—— 非阻塞
             showDialog(exitDlg);
         } else {
@@ -815,7 +741,7 @@ public class myGameView extends JFrame implements LockBoard {
         // 若第 ③ 步发生在第 ④ 步之前（即 EDT 在回调里停留超过 1ms），就必然丢拍。
         // 弹「死锁移动」提示框正好会这样：showLockDlg() 紧跟在本拍 sleepTimer() 之后，
         // setVisible() 建窗/定尺寸要几十 ms，EDT 一直停在回调里 → 丢拍 → 循环停摆 →
-        // m_bBusing 永远停在 true → bt_UnDo 监听器第 396 行 `if (m_bBusing) return;` 早退，
+        // state.m_bBusing 永远停在 true → bt_UnDo 监听器第 396 行 `if (state.m_bBusing) return;` 早退，
         // 表现就是用户报的「点击撤销不会撤销，直接卡住」。
         //
         // 关掉 coalesce 后 post() 走 `|| !coalesce` 分支，每次都投递 —— 与 sendMessageDelayed 等价。
@@ -863,22 +789,20 @@ public class myGameView extends JFrame implements LockBoard {
             myMaps.m_nTrun = myMaps.curMap.Trun;
         }
         myMaps.isHengping = false;
-        m_iR9 = -1;
-        m_iC9 = -1;
-        m_iR10 = -1;
-        m_iC10 = -1;
+        state.m_iR9 = -1;
+        state.m_iC9 = -1;
+        state.m_iR10 = -1;
+        state.m_iC10 = -1;
 
         initMap();
-        m_bNetLock = false;
+        state.m_bNetLock = false;
 
-        closedDiagonalLock = new DiagonalLock(this);
-        freezeDeadlock = new FreezeLock(this);
     }
 
     // 旋转方向计算
     private int getRotate(int mDir1, int mDir2) {
         int mRT = 0;
-        if (b_nRow < 0 || (!bt_BK.isChecked() && myMaps.m_Sets[18] > 0)) {
+        if (state.b_nRow < 0 || (!bt_BK.isChecked() && myMaps.m_Sets[18] > 0)) {
             switch (mDir1) {
                 case 1:
                     switch (mDir2) {
@@ -948,9 +872,9 @@ public class myGameView extends JFrame implements LockBoard {
 
     // redo -- 正推
     public void UpData1(int i) {
-        if ((i != 1 || m_nStep <= 0 || m_lstMovReDo.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
+        if ((i != 1 || state.m_nStep <= 0 || state.m_lstMovReDo.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
             if (myClearance()) {
-                if (m_bMoved) {
+                if (state.m_bMoved) {
                     if (myMaps.curMap != null && myMaps.curMap.Level_id > 0) {
                         saveAns(1);
                         // 原版 AotoNextDlg.show()：非阻塞、已显示就早退（myGameView.java:345 / 385）
@@ -961,37 +885,37 @@ public class myGameView extends JFrame implements LockBoard {
                     }
                 } else MyToast.showToast(this, "正推通关！", MyToast.LENGTH_SHORT);
             } else if (myMeet()) {
-                if (m_bMoved) {
+                if (state.m_bMoved) {
                     zhengniHE();
                     saveAns2();
                     if (myMaps.curMap != null && myMaps.curMap.Level_id < 0)
                         MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
                 } else MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
             }
-            m_bBusing = false;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
+            state.m_bBusing = false;
+            state.m_bYanshi = false;
+            state.m_bYanshi2 = false;
             return;
         }
 
         if (bt_IM.isChecked()) {
-            if (m_bYanshi) {
+            if (state.m_bYanshi) {
                 do {
                     reDo1();
-                } while (m_nStep > 0 && (m_bPush && m_lstMovReDo.getLast() == m_Dir || !m_bPush && m_lstMovReDo.getLast() < 5));
+                } while (state.m_nStep > 0 && (state.m_bPush && state.m_lstMovReDo.getLast() == state.m_Dir || !state.m_bPush && state.m_lstMovReDo.getLast() < 5));
                 mMap.invalidate();
 
-                if (m_nStep > 0) {
+                if (state.m_nStep > 0) {
                     sleepTimer(myTimer1, YanshiSpeed[myMaps.m_Sets[10]]);
-                    m_bPush = false;
+                    state.m_bPush = false;
                 }
             } else {
-                while (m_nStep > 0) reDo1();
+                while (state.m_nStep > 0) reDo1();
                 mMap.invalidate();
             }
             if (myClearance()) {
-                m_bYanshi = false;
-                if (m_bMoved) {
+                state.m_bYanshi = false;
+                if (state.m_bMoved) {
                     if (myMaps.curMap != null && myMaps.curMap.Level_id > 0) {
                         saveAns(1);
                         // 原版 AotoNextDlg.show()：非阻塞、已显示就早退（myGameView.java:345 / 385）
@@ -1002,15 +926,15 @@ public class myGameView extends JFrame implements LockBoard {
                     }
                 } else MyToast.showToast(this, "正推通关！", MyToast.LENGTH_SHORT);
             } else if (myMeet()) {
-                m_bYanshi = false;
-                if (m_bMoved) {
+                state.m_bYanshi = false;
+                if (state.m_bMoved) {
                     zhengniHE();
                     saveAns2();
                     if (myMaps.curMap != null && myMaps.curMap.Level_id < 0)
                         MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
                 } else MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
             }
-            m_bBusing = false;
+            state.m_bBusing = false;
         } else {
             if (mMap.d_Moves < mMap.m_PicWidth) {
                 if (mMap.d_Moves >= 0) mMap.d_Moves += m_iSleep[myMaps.m_Sets[10]];
@@ -1018,14 +942,14 @@ public class myGameView extends JFrame implements LockBoard {
                 if (mMap.d_Moves >= -10000 && mMap.d_Moves < -2080 || mMap.d_Moves >= -2000 && mMap.d_Moves < -1080 || mMap.d_Moves >= -1000 && mMap.d_Moves < 0)
                     mMap.d_Moves = 0;
             } else {
-                b_nRow = -1;
-                b_nCol = -1;
+                state.b_nRow = -1;
+                state.b_nCol = -1;
                 oldDir = myMaps.m_Sets[5];
-                if (m_bYanshi && myMaps.m_Sets[28] == 1) {
+                if (state.m_bYanshi && myMaps.m_Sets[28] == 1) {
                     do {
                         reDo1();
-                    } while (m_nStep > 0 && !m_bPush);
-                    m_bPush = false;
+                    } while (state.m_nStep > 0 && !state.m_bPush);
+                    state.m_bPush = false;
                 } else {
                     reDo1();
                 }
@@ -1033,7 +957,7 @@ public class myGameView extends JFrame implements LockBoard {
                 if (myMaps.isSimpleSkin || myMaps.isSkin_200 == 0 || myMaps.m_Sets[27] == 0 || myMaps.m_Sets[10] < 3) {
                     mMap.d_Moves = 0;
                 } else {
-                    if (!m_bACT_ERROR) {
+                    if (!state.m_bACT_ERROR) {
                         mMap.d_Moves = getRotate(oldDir, myMaps.m_Sets[14]);
                     }
                 }
@@ -1043,7 +967,7 @@ public class myGameView extends JFrame implements LockBoard {
         }
 
         // 正推死锁判断
-        if (m_nStep == 0 && myMaps.m_Sets[11] == 1 && mMap.d_Moves >= mMap.m_PicWidth && myLock(m_iR9, m_iC9)) {
+        if (state.m_nStep == 0 && myMaps.m_Sets[11] == 1 && mMap.d_Moves >= mMap.m_PicWidth && myLock(state.m_iR9, state.m_iC9)) {
             showLockDlg();
         }
     }
@@ -1130,27 +1054,27 @@ public class myGameView extends JFrame implements LockBoard {
 
     // undo -- 正推
     public void UpData2(int i) {
-        if ((i != 1 || m_nStep <= 0 || m_lstMovUnDo.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
+        if ((i != 1 || state.m_nStep <= 0 || state.m_lstMovUnDo.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
             if (myClearance())
                 MyToast.showToast(this, "正推通关！", MyToast.LENGTH_SHORT);
             else if (myMeet())
                 MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
-            m_bBusing = false;
-            m_bYanshi2 = false;
+            state.m_bBusing = false;
+            state.m_bYanshi2 = false;
             return;
         }
 
         if (bt_IM.isChecked()) {
-            while (m_nStep > 0) unDo1();
+            while (state.m_nStep > 0) unDo1();
             mMap.invalidate();
             if (myClearance()) {
-                m_bYanshi2 = false;
+                state.m_bYanshi2 = false;
                 MyToast.showToast(this, "正推通关！", MyToast.LENGTH_SHORT);
             } else if (myMeet()) {
-                m_bYanshi2 = false;
+                state.m_bYanshi2 = false;
                 MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
             }
-            m_bBusing = false;
+            state.m_bBusing = false;
         } else {
             if (mMap.d_Moves < mMap.m_PicWidth) {
                 if (mMap.d_Moves >= 0) mMap.d_Moves += m_iSleep[myMaps.m_Sets[10]];
@@ -1158,8 +1082,8 @@ public class myGameView extends JFrame implements LockBoard {
                 if (mMap.d_Moves >= -10000 && mMap.d_Moves < -2080 || mMap.d_Moves >= -2000 && mMap.d_Moves < -1080 || mMap.d_Moves >= -1000 && mMap.d_Moves < 0)
                     mMap.d_Moves = 0;
             } else {
-                b_nRow = -1;
-                b_nCol = -1;
+                state.b_nRow = -1;
+                state.b_nCol = -1;
                 oldDir = myMaps.m_Sets[5];
                 unDo1();
                 myMaps.m_Sets[18] = -1;
@@ -1174,56 +1098,56 @@ public class myGameView extends JFrame implements LockBoard {
 
     // redo -- 逆推
     public void UpData3(int i) {
-        if ((i != 1 || m_nStep <= 0 || m_lstMovReDo2.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
+        if ((i != 1 || state.m_nStep <= 0 || state.m_lstMovReDo2.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
             if (myClearance2()) {
-                if (m_bMoved) {
+                if (state.m_bMoved) {
                     zhengniHE2();
                     saveAns2();
                     if (myMaps.curMap != null && myMaps.curMap.Level_id < 0)
                         MyToast.showToast(this, "逆推通关！", MyToast.LENGTH_SHORT);
                 } else MyToast.showToast(this, "逆推通关！", MyToast.LENGTH_SHORT);
             } else if (myMeet()) {
-                if (m_bMoved) {
+                if (state.m_bMoved) {
                     zhengniHE();
                     saveAns2();
                     if (myMaps.curMap != null && myMaps.curMap.Level_id < 0)
                         MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
                 } else MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
             }
-            m_bBusing = false;
+            state.m_bBusing = false;
             return;
         }
 
         if (bt_IM.isChecked()) {
-            if (m_bYanshi2) {
+            if (state.m_bYanshi2) {
                 do {
                     reDo2();
-                } while (m_nStep > 0 && (m_bPush && m_lstMovReDo2.getLast() == m_Dir || !m_bPush && m_lstMovReDo2.getLast() < 5));
+                } while (state.m_nStep > 0 && (state.m_bPush && state.m_lstMovReDo2.getLast() == state.m_Dir || !state.m_bPush && state.m_lstMovReDo2.getLast() < 5));
                 mMap.invalidate();
-                if (m_nStep > 0) {
+                if (state.m_nStep > 0) {
                     sleepTimer(myTimer3, YanshiSpeed[myMaps.m_Sets[10]]);
-                    m_bPush = false;
+                    state.m_bPush = false;
                 }
             } else {
-                while (m_nStep > 0) reDo2();
+                while (state.m_nStep > 0) reDo2();
                 mMap.invalidate();
             }
             if (myClearance2()) {
-                if (m_bMoved) {
+                if (state.m_bMoved) {
                     zhengniHE2();
                     saveAns2();
                     if (myMaps.curMap != null && myMaps.curMap.Level_id < 0)
                         MyToast.showToast(this, "逆推通关！", MyToast.LENGTH_SHORT);
                 } else MyToast.showToast(this, "逆推通关！", MyToast.LENGTH_SHORT);
             } else if (myMeet()) {
-                if (m_bMoved) {
+                if (state.m_bMoved) {
                     zhengniHE();
                     saveAns2();
                     if (myMaps.curMap != null && myMaps.curMap.Level_id < 0)
                         MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
                 } else MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
             }
-            m_bBusing = false;
+            state.m_bBusing = false;
         } else {
             if (mMap.d_Moves < mMap.m_PicWidth) {
                 if (mMap.d_Moves >= 0) mMap.d_Moves += m_iSleep[myMaps.m_Sets[10]];
@@ -1231,15 +1155,15 @@ public class myGameView extends JFrame implements LockBoard {
                 if (mMap.d_Moves >= -10000 && mMap.d_Moves < -2080 || mMap.d_Moves >= -2000 && mMap.d_Moves < -1080 || mMap.d_Moves >= -1000 && mMap.d_Moves < 0)
                     mMap.d_Moves = 0;
             } else {
-                b_nRow = -1;
-                b_nCol = -1;
+                state.b_nRow = -1;
+                state.b_nCol = -1;
                 oldDir = myMaps.m_Sets[5];
                 reDo2();
                 myMaps.m_Sets[18] = 1;
                 if (myMaps.isSimpleSkin || myMaps.isSkin_200 == 0 || myMaps.m_Sets[27] == 0 || myMaps.m_Sets[10] < 3) {
                     mMap.d_Moves = 0;
                 } else {
-                    if (!m_bACT_ERROR) {
+                    if (!state.m_bACT_ERROR) {
                         mMap.d_Moves = getRotate(oldDir, myMaps.m_Sets[14]);
                     }
                 }
@@ -1249,30 +1173,30 @@ public class myGameView extends JFrame implements LockBoard {
         }
 
         // 逆推死锁判断
-        if (m_nStep == 0 && myMaps.m_Sets[11] == 1 && mMap.d_Moves >= mMap.m_PicWidth && myLock2(m_iR10, m_iC10)) {
+        if (state.m_nStep == 0 && myMaps.m_Sets[11] == 1 && mMap.d_Moves >= mMap.m_PicWidth && myLock2(state.m_iR10, state.m_iC10)) {
             showLockDlg();
         }
     }
 
     // undo -- 逆推
     public void UpData4(int i) {
-        if ((i != 1 || m_nStep <= 0 || m_lstMovUnDo2.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
+        if ((i != 1 || state.m_nStep <= 0 || state.m_lstMovUnDo2.isEmpty()) && mMap.d_Moves >= mMap.m_PicWidth) {
             if (myClearance2())
                 MyToast.showToast(this, "逆推通关！", MyToast.LENGTH_SHORT);
             else if (myMeet())
                 MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
-            m_bBusing = false;
+            state.m_bBusing = false;
             return;
         }
 
         if (bt_IM.isChecked()) {
-            while (m_nStep > 0) unDo2();
+            while (state.m_nStep > 0) unDo2();
             mMap.invalidate();
             if (myClearance2())
                 MyToast.showToast(this, "逆推通关！", MyToast.LENGTH_SHORT);
             else if (myMeet())
                 MyToast.showToast(this, "正逆相合！", MyToast.LENGTH_SHORT);
-            m_bBusing = false;
+            state.m_bBusing = false;
         } else {
             if (mMap.d_Moves < mMap.m_PicWidth) {
                 if (mMap.d_Moves >= 0) mMap.d_Moves += m_iSleep[myMaps.m_Sets[10]];
@@ -1280,8 +1204,8 @@ public class myGameView extends JFrame implements LockBoard {
                 if (mMap.d_Moves >= -10000 && mMap.d_Moves < -2080 || mMap.d_Moves >= -2000 && mMap.d_Moves < -1080 || mMap.d_Moves >= -1000 && mMap.d_Moves < 0)
                     mMap.d_Moves = 0;
             } else {
-                b_nRow = -1;
-                b_nCol = -1;
+                state.b_nRow = -1;
+                state.b_nCol = -1;
                 oldDir = myMaps.m_Sets[5];
                 unDo2();
                 myMaps.m_Sets[18] = -1;
@@ -1294,590 +1218,96 @@ public class myGameView extends JFrame implements LockBoard {
         }
     }
 
-    int i, j, i2, j2;
-    byte m_Dir;
-    int[] dr_reDo1 = {0, 0, -1, 0, 1, 0, -2, 0, 2};
-    int[] dc_reDo1 = {0, -1, 0, 1, 0, -2, 0, 2, 0};
 
     public void reDo1() {
         if (mMap.m_lGoto) {
-            int len = m_lstMovUnDo.size();
-            int len2 = m_lstMovUnDo.size() + m_lstMovReDo.size();
-            if (len2 > 0) {
-                mMap.curMoves = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
-            } else mMap.curMoves = 0;
+            int len = state.m_lstMovUnDo.size();
+            int len2 = len + state.m_lstMovReDo.size();
+            if (len2 > 0) mMap.curMoves = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
+            else mMap.curMoves = 0;
         }
-        if (m_lstMovReDo.isEmpty()) {
-            m_bBusing = false;
-            m_nStep = 0;
-            return;
+        boolean hadMove = !state.m_lstMovReDo.isEmpty();
+        state.reDo1();
+        if (hadMove) resetForwardHints();
+        if (mMap.Box_Row0 < 0 && state.lastBoxFromRow >= 0) {
+            mMap.Box_Row0 = state.lastBoxFromRow;
+            mMap.Box_Col0 = state.lastBoxFromCol;
         }
-        m_bBusing = true;
-        m_iR9 = -1;
-        m_Dir = m_lstMovReDo.pollLast();
+        mMap.m_iR = state.m_nRow;
+        mMap.m_iC = state.m_nCol;
+    }
 
-        if (m_Dir < 1 || m_Dir > 8) {
-            m_bBusing = false;
-            m_lstMovReDo.clear();
-            m_nStep = 0;
-            m_bACT_ERROR = true;
-            return;
-        }
-        m_bPush = (m_Dir > 4);
+    private void resetForwardHints() {
         if (mMap.m_bBoxTo) mMap.m_bBoxTo = false;
         if (mMap.m_bManTo) mMap.m_bManTo = false;
         if (mMap.m_boxCanMove) mMap.m_boxCanMove = false;
         if (mMap.m_boxNoMoved) mMap.m_boxNoMoved = false;
         if (mMap.m_boxNoUsed) mMap.m_boxNoUsed = false;
         if (mMap.m_boxCanCome) mMap.m_boxCanCome = false;
-
-        if (m_Dir < 5) {
-            myMaps.m_Sets[14] = m_Dir;
-            myMaps.m_Sets[5] = m_Dir;
-            i = m_nRow + dr_reDo1[m_Dir];
-            j = m_nCol + dc_reDo1[m_Dir];
-            i2 = -1;
-            j2 = -1;
-        } else {
-            myMaps.m_Sets[14] = m_Dir - 4;
-            myMaps.m_Sets[5] = m_Dir - 4;
-            i = m_nRow + dr_reDo1[m_Dir - 4];
-            j = m_nCol + dc_reDo1[m_Dir - 4];
-            i2 = m_nRow + dr_reDo1[m_Dir];
-            j2 = m_nCol + dc_reDo1[m_Dir];
-        }
-
-        if (m_bACT_IgnoreCase) {
-            if (m_Dir > 4) {
-                if (i >= 0 && j >= 0 && i < m_cArray.length && j < m_cArray[0].length &&
-                        (m_cArray[i][j] == '-' || m_cArray[i][j] == '.')) {
-                    m_Dir = (byte) (m_Dir - 4);
-                    i = m_nRow + dr_reDo1[m_Dir];
-                    j = m_nCol + dc_reDo1[m_Dir];
-                    i2 = -1;
-                    j2 = -1;
-                }
-            } else {
-                if (i >= 0 && j >= 0 && i < m_cArray.length && j < m_cArray[0].length &&
-                        (m_cArray[i][j] == '$' || m_cArray[i][j] == '*')) {
-                    m_Dir = (byte) (m_Dir + 4);
-                    i = m_nRow + dr_reDo1[m_Dir - 4];
-                    j = m_nCol + dc_reDo1[m_Dir - 4];
-                    i2 = m_nRow + dr_reDo1[m_Dir];
-                    j2 = m_nCol + dc_reDo1[m_Dir];
-                }
-            }
-        }
-
-        if (m_Dir > 4) {
-            if (i < 0 || j < 0 || i2 < 0 || j2 < 0 ||
-                    i >= m_cArray.length || j >= m_cArray[0].length || i2 >= m_cArray.length || j2 >= m_cArray[0].length ||
-                    m_cArray[i2][j2] != '-' && m_cArray[i2][j2] != '.' ||
-                    m_cArray[i][j] != '$' && m_cArray[i][j] != '*') {
-                m_lstMovReDo.clear();
-                m_bBusing = false;
-                m_nStep = 0;
-                m_bACT_ERROR = true;
-                return;
-            }
-            if (mMap.Box_Row0 < 0) {
-                mMap.Box_Row0 = i;
-                mMap.Box_Col0 = j;
-            }
-            if (m_cArray[i2][j2] == '-')
-                m_cArray[i2][j2] = '$';
-            else {
-                m_cArray[i2][j2] = '*';
-                m_nGoals_OK++;
-            }
-            m_iBoxNum[i2][j2] = m_iBoxNum[i][j];
-            m_iBoxNum[i][j] = -1;
-            m_iBoxNum2[i2][j2] = m_iBoxNum2[i][j];
-            m_iBoxNum2[i][j] = -1;
-
-            if (m_cArray[i][j] == '$')
-                m_cArray[i][j] = '@';
-            else {
-                m_cArray[i][j] = '+';
-                m_nGoals_OK--;
-            }
-            if (m_cArray[m_nRow][m_nCol] == '@')
-                m_cArray[m_nRow][m_nCol] = '-';
-            else
-                m_cArray[m_nRow][m_nCol] = '.';
-
-            m_nRow = i;
-            m_nCol = j;
-            m_iR9 = i2;
-            m_iC9 = j2;
-            b_nRow = i2;
-            b_nCol = j2;
-
-            m_lstMovUnDo.offer(m_Dir);
-            m_iStep[0]++;
-        } else {
-            if (i < 0 || j < 0 || i >= m_cArray.length || j >= m_cArray[0].length ||
-                    m_cArray[i][j] != '-' && m_cArray[i][j] != '.') {
-                m_lstMovReDo.clear();
-                m_bBusing = false;
-                m_nStep = 0;
-                m_bACT_ERROR = true;
-                return;
-            }
-            if (m_cArray[i][j] == '-')
-                m_cArray[i][j] = '@';
-            else {
-                m_cArray[i][j] = '+';
-            }
-            if (m_cArray[m_nRow][m_nCol] == '@')
-                m_cArray[m_nRow][m_nCol] = '-';
-            else
-                m_cArray[m_nRow][m_nCol] = '.';
-
-            m_nRow = i;
-            m_nCol = j;
-
-            m_lstMovUnDo.offer(m_Dir);
-        }
-
-        m_iStep[1]++;
-        m_nStep--;
-        mMap.m_iR = m_nRow;
-        mMap.m_iC = m_nCol;
     }
 
-    byte[] dr_unDo1 = {0, 0, 1, 0, -1, 0, -1, 0, 1};
-    byte[] dc_unDo1 = {0, 1, 0, -1, 0, -1, 0, 1, 0};
+    private void resetBackwardHints() {
+        if (mMap.m_bBoxTo2) mMap.m_bBoxTo2 = false;
+        if (mMap.m_bManTo2) mMap.m_bManTo2 = false;
+        if (mMap.m_boxCanMove2) mMap.m_boxCanMove2 = false;
+        if (mMap.m_boxCanCome2) mMap.m_boxCanCome2 = false;
+    }
+
+
 
     public void unDo1() {
         if (mMap.m_lGoto) {
-            int len = m_lstMovUnDo.size();
-            int len2 = m_lstMovUnDo.size() + m_lstMovReDo.size();
-            if (len2 > 0) {
-                mMap.curMoves = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
-            } else mMap.curMoves = 0;
+            int len = state.m_lstMovUnDo.size();
+            int len2 = len + state.m_lstMovReDo.size();
+            if (len2 > 0) mMap.curMoves = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
+            else mMap.curMoves = 0;
         }
-        if (m_lstMovUnDo.isEmpty()) {
-            m_bBusing = false;
-            return;
-        }
-        m_bBusing = true;
-        m_Dir = m_lstMovUnDo.pollLast();
-
-        m_bPush = (m_Dir > 4);
-        if (mMap.m_bBoxTo) mMap.m_bBoxTo = false;
-        if (mMap.m_bManTo) mMap.m_bManTo = false;
-        if (mMap.m_boxCanMove) mMap.m_boxCanMove = false;
-        if (mMap.m_boxNoMoved) mMap.m_boxNoMoved = false;
-        if (mMap.m_boxNoUsed) mMap.m_boxNoUsed = false;
-        if (mMap.m_boxCanCome) mMap.m_boxCanCome = false;
-
-        switch (m_Dir) {
-            case 1:
-                myMaps.m_Sets[14] = 3;
-                myMaps.m_Sets[5] = 3;
-                break;
-            case 2:
-                myMaps.m_Sets[14] = 4;
-                myMaps.m_Sets[5] = 4;
-                break;
-            case 3:
-                myMaps.m_Sets[14] = 1;
-                myMaps.m_Sets[5] = 1;
-                break;
-            case 4:
-                myMaps.m_Sets[14] = 2;
-                myMaps.m_Sets[5] = 2;
-                break;
-            case 5:
-                myMaps.m_Sets[14] = 3;
-                myMaps.m_Sets[5] = 1;
-                break;
-            case 6:
-                myMaps.m_Sets[14] = 4;
-                myMaps.m_Sets[5] = 2;
-                break;
-            case 7:
-                myMaps.m_Sets[14] = 1;
-                myMaps.m_Sets[5] = 3;
-                break;
-            case 8:
-                myMaps.m_Sets[14] = 2;
-                myMaps.m_Sets[5] = 4;
-                break;
-        }
-        if (m_Dir < 5) {
-            i = m_nRow + dr_unDo1[m_Dir];
-            j = m_nCol + dc_unDo1[m_Dir];
-            i2 = -1;
-            j2 = -1;
-        } else {
-            i = m_nRow + dr_unDo1[m_Dir - 4];
-            j = m_nCol + dc_unDo1[m_Dir - 4];
-            i2 = m_nRow + dr_unDo1[m_Dir];
-            j2 = m_nCol + dc_unDo1[m_Dir];
-        }
-
-        if (m_Dir > 4) {
-            if ((m_cArray[i][j] == '-' || m_cArray[i][j] == '.') &&
-                    (m_cArray[i2][j2] == '$' || m_cArray[i2][j2] == '*')) {
-                if (m_cArray[i][j] == '-')
-                    m_cArray[i][j] = '@';
-                else {
-                    m_cArray[i][j] = '+';
-                }
-                if (m_cArray[m_nRow][m_nCol] == '@')
-                    m_cArray[m_nRow][m_nCol] = '$';
-                else {
-                    m_cArray[m_nRow][m_nCol] = '*';
-                    m_nGoals_OK++;
-                }
-                if (m_cArray[i2][j2] == '$')
-                    m_cArray[i2][j2] = '-';
-                else {
-                    m_cArray[i2][j2] = '.';
-                    m_nGoals_OK--;
-                }
-                m_iBoxNum[m_nRow][m_nCol] = m_iBoxNum[i2][j2];
-                m_iBoxNum[i2][j2] = -1;
-                m_iBoxNum2[m_nRow][m_nCol] = m_iBoxNum2[i2][j2];
-                m_iBoxNum2[i2][j2] = -1;
-
-                b_nRow = m_nRow;
-                b_nCol = m_nCol;
-                m_nRow = i;
-                m_nCol = j;
-
-                m_lstMovReDo.offer(m_Dir);
-                m_iStep[0]--;
-            }
-        } else {
-            if (m_cArray[i][j] == '-' || m_cArray[i][j] == '.') {
-                if (m_cArray[i][j] == '-')
-                    m_cArray[i][j] = '@';
-                else {
-                    m_cArray[i][j] = '+';
-                }
-                if (m_cArray[m_nRow][m_nCol] == '@')
-                    m_cArray[m_nRow][m_nCol] = '-';
-                else
-                    m_cArray[m_nRow][m_nCol] = '.';
-
-                m_nRow = i;
-                m_nCol = j;
-
-                m_lstMovReDo.offer(m_Dir);
-            }
-        }
-
-        m_iStep[1]--;
-        if (m_iStep[1] < m_Gif_Start) m_Gif_Start = 0;
-        m_nStep--;
-        mMap.m_iR = m_nRow;
-        mMap.m_iC = m_nCol;
+        boolean hadMove = !state.m_lstMovUnDo.isEmpty();
+        state.unDo1();
+        if (hadMove) resetForwardHints();
+        mMap.m_iR = state.m_nRow;
+        mMap.m_iC = state.m_nCol;
     }
 
-    int[] dr_reDo2 = {0, 0, -1, 0, 1, 0, 1, 0, -1};
-    int[] dc_reDo2 = {0, -1, 0, 1, 0, 1, 0, -1, 0};
+
 
     public void reDo2() {
         if (mMap.m_lGoto2) {
-            int len = m_lstMovUnDo2.size();
-            int len2 = m_lstMovUnDo2.size() + m_lstMovReDo2.size();
-            if (len2 > 0) {
-                mMap.curMoves2 = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
-            } else mMap.curMoves2 = 0;
+            int len = state.m_lstMovUnDo2.size();
+            int len2 = len + state.m_lstMovReDo2.size();
+            if (len2 > 0) mMap.curMoves2 = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
+            else mMap.curMoves2 = 0;
         }
-        if (m_lstMovReDo2.isEmpty()) {
-            m_bBusing = false;
-            m_nStep = 0;
-            return;
-        }
-        m_bBusing = true;
-        m_iR10 = -1;
-        m_Dir = m_lstMovReDo2.pollLast();
-
-        if (m_Dir < 1 || m_Dir > 8) {
-            m_bBusing = false;
-            m_lstMovReDo2.clear();
-            m_nStep = 0;
-            m_bACT_ERROR = true;
-            return;
-        }
-        m_bPush = (m_Dir > 4);
-        if (mMap.m_bBoxTo2) mMap.m_bBoxTo2 = false;
-        if (mMap.m_bManTo2) mMap.m_bManTo2 = false;
-        if (mMap.m_boxCanMove2) mMap.m_boxCanMove2 = false;
-        if (mMap.m_boxCanCome2) mMap.m_boxCanCome2 = false;
-
-        switch (m_Dir) {
-            case 1:
-                myMaps.m_Sets[14] = 1;
-                myMaps.m_Sets[5] = 1;
-                break;
-            case 2:
-                myMaps.m_Sets[14] = 2;
-                myMaps.m_Sets[5] = 2;
-                break;
-            case 3:
-                myMaps.m_Sets[14] = 3;
-                myMaps.m_Sets[5] = 3;
-                break;
-            case 4:
-                myMaps.m_Sets[14] = 4;
-                myMaps.m_Sets[5] = 4;
-                break;
-            case 5:
-                myMaps.m_Sets[14] = 1;
-                myMaps.m_Sets[5] = 3;
-                break;
-            case 6:
-                myMaps.m_Sets[14] = 2;
-                myMaps.m_Sets[5] = 4;
-                break;
-            case 7:
-                myMaps.m_Sets[14] = 3;
-                myMaps.m_Sets[5] = 1;
-                break;
-            case 8:
-                myMaps.m_Sets[14] = 4;
-                myMaps.m_Sets[5] = 2;
-                break;
-        }
-        if (m_Dir < 5) {
-            i = m_nRow2 + dr_reDo2[m_Dir];
-            j = m_nCol2 + dc_reDo2[m_Dir];
-            i2 = -1;
-            j2 = -1;
-        } else {
-            i = m_nRow2 + dr_reDo2[m_Dir - 4];
-            j = m_nCol2 + dc_reDo2[m_Dir - 4];
-            i2 = m_nRow2 + dr_reDo2[m_Dir];
-            j2 = m_nCol2 + dc_reDo2[m_Dir];
-        }
-
-        if (m_bACT_IgnoreCase) {
-            if (m_Dir > 4) {
-                if (i >= 0 && j >= 0 && i < bk_cArray.length && j < bk_cArray[0].length &&
-                        (bk_cArray[i2][j2] == '-' || bk_cArray[i2][j2] == '.')) {
-                    m_Dir = (byte) (m_Dir - 4);
-                    i = m_nRow2 + dr_reDo2[m_Dir];
-                    j = m_nCol2 + dc_reDo2[m_Dir];
-                    i2 = -1;
-                    j2 = -1;
-                }
-            } else {
-                if (i >= 0 && j >= 0 && i < bk_cArray.length && j < bk_cArray[0].length &&
-                        (bk_cArray[m_nRow2 + dr_reDo2[m_Dir]][m_nCol2 + dc_reDo2[m_Dir]] == '$' || bk_cArray[m_nRow2 + dr_reDo2[m_Dir]][m_nCol2 + dc_reDo2[m_Dir]] == '*')) {
-                    m_Dir = (byte) (m_Dir + 4);
-                    i = m_nRow2 + dr_reDo2[m_Dir - 4];
-                    j = m_nCol2 + dc_reDo2[m_Dir - 4];
-                    i2 = m_nRow2 + dr_reDo2[m_Dir];
-                    j2 = m_nCol2 + dc_reDo2[m_Dir];
-                }
-            }
-        }
-
-        if (m_Dir > 4) {
-            if (i < 0 || j < 0 || i2 < 0 || j2 < 0 ||
-                    i >= bk_cArray.length || j >= bk_cArray[0].length || i2 >= bk_cArray.length || j2 >= bk_cArray[0].length ||
-                    bk_cArray[i][j] != '-' && bk_cArray[i][j] != '.' ||
-                    bk_cArray[i2][j2] != '$' && bk_cArray[i2][j2] != '*') {
-                m_lstMovReDo2.clear();
-                m_bBusing = false;
-                m_nStep = 0;
-                m_bACT_ERROR = true;
-                return;
-            }
-            if (bk_cArray[i][j] == '-')
-                bk_cArray[i][j] = '@';
-            else {
-                bk_cArray[i][j] = '+';
-            }
-            if (bk_cArray[m_nRow2][m_nCol2] == '@')
-                bk_cArray[m_nRow2][m_nCol2] = '$';
-            else {
-                bk_cArray[m_nRow2][m_nCol2] = '*';
-                m_nGoals_OK_2++;
-            }
-            if (bk_cArray[i2][j2] == '$')
-                bk_cArray[i2][j2] = '-';
-            else {
-                bk_cArray[i2][j2] = '.';
-                m_nGoals_OK_2--;
-            }
-
-            m_iR10 = m_nRow2;
-            m_iC10 = m_nCol2;
-            b_nRow = m_nRow2;
-            b_nCol = m_nCol2;
-            m_nRow2 = i;
-            m_nCol2 = j;
-
-            m_lstMovUnDo2.offer(m_Dir);
-            m_iStep[2]++;
-        } else {
-            if (i < 0 || j < 0 || i >= bk_cArray.length || j >= bk_cArray[0].length ||
-                    bk_cArray[i][j] != '-' && bk_cArray[i][j] != '.') {
-                m_lstMovReDo2.clear();
-                m_bBusing = false;
-                m_nStep = 0;
-                m_bACT_ERROR = true;
-                return;
-            }
-            if (bk_cArray[i][j] == '-')
-                bk_cArray[i][j] = '@';
-            else {
-                bk_cArray[i][j] = '+';
-            }
-            if (bk_cArray[m_nRow2][m_nCol2] == '@')
-                bk_cArray[m_nRow2][m_nCol2] = '-';
-            else
-                bk_cArray[m_nRow2][m_nCol2] = '.';
-
-            m_nRow2 = i;
-            m_nCol2 = j;
-
-            m_lstMovUnDo2.offer(m_Dir);
-        }
-
-        m_iStep[3]++;
-        m_nStep--;
-        mMap.m_iR = m_nRow2;
-        mMap.m_iC = m_nCol2;
+        boolean hadMove = !state.m_lstMovReDo2.isEmpty();
+        state.reDo2();
+        if (hadMove) resetBackwardHints();
+        mMap.m_iR = state.m_nRow2;
+        mMap.m_iC = state.m_nCol2;
     }
 
-    int[] dr_unDo2 = {0, 0, 1, 0, -1, 0, 2, 0, -2};
-    int[] dc_unDo2 = {0, 1, 0, -1, 0, 2, 0, -2, 0};
+
 
     public void unDo2() {
         if (mMap.m_lGoto2) {
-            int len = m_lstMovUnDo2.size();
-            int len2 = m_lstMovUnDo2.size() + m_lstMovReDo2.size();
-            if (len2 > 0) {
-                mMap.curMoves2 = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
-            } else mMap.curMoves2 = 0;
+            int len = state.m_lstMovUnDo2.size();
+            int len2 = len + state.m_lstMovReDo2.size();
+            if (len2 > 0) mMap.curMoves2 = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
+            else mMap.curMoves2 = 0;
         }
-        if (m_lstMovUnDo2.isEmpty()) {
-            m_bBusing = false;
-            return;
-        }
-        m_bBusing = true;
-        m_Dir = m_lstMovUnDo2.pollLast();
-
-        m_bPush = (m_Dir > 4);
-        if (mMap.m_bBoxTo2) mMap.m_bBoxTo2 = false;
-        if (mMap.m_bManTo2) mMap.m_bManTo2 = false;
-        if (mMap.m_boxCanMove2) mMap.m_boxCanMove2 = false;
-        if (mMap.m_boxCanCome2) mMap.m_boxCanCome2 = false;
-
-        switch (m_Dir) {
-            case 1:
-            case 5:
-                myMaps.m_Sets[14] = 3;
-                myMaps.m_Sets[5] = 3;
-                break;
-            case 2:
-            case 6:
-                myMaps.m_Sets[14] = 4;
-                myMaps.m_Sets[5] = 4;
-                break;
-            case 3:
-            case 7:
-                myMaps.m_Sets[14] = 1;
-                myMaps.m_Sets[5] = 1;
-                break;
-            case 4:
-            case 8:
-                myMaps.m_Sets[14] = 2;
-                myMaps.m_Sets[5] = 2;
-                break;
-        }
-        if (m_Dir < 5) {
-            i = m_nRow2 + dr_unDo2[m_Dir];
-            j = m_nCol2 + dc_unDo2[m_Dir];
-            i2 = -1;
-            j2 = -1;
-        } else {
-            i = m_nRow2 + dr_unDo2[m_Dir - 4];
-            j = m_nCol2 + dc_unDo2[m_Dir - 4];
-            i2 = m_nRow2 + dr_unDo2[m_Dir];
-            j2 = m_nCol2 + dc_unDo2[m_Dir];
-        }
-
-        if (m_Dir > 4) {
-            if ((bk_cArray[i2][j2] == '-' || bk_cArray[i2][j2] == '.') &&
-                    (bk_cArray[i][j] == '$' || bk_cArray[i][j] == '*')) {
-                if (bk_cArray[i2][j2] == '-')
-                    bk_cArray[i2][j2] = '$';
-                else {
-                    bk_cArray[i2][j2] = '*';
-                    m_nGoals_OK_2++;
-                }
-                if (bk_cArray[i][j] == '$')
-                    bk_cArray[i][j] = '@';
-                else {
-                    bk_cArray[i][j] = '+';
-                    m_nGoals_OK_2--;
-                }
-                if (bk_cArray[m_nRow2][m_nCol2] == '@')
-                    bk_cArray[m_nRow2][m_nCol2] = '-';
-                else
-                    bk_cArray[m_nRow2][m_nCol2] = '.';
-
-                m_nRow2 = i;
-                m_nCol2 = j;
-                b_nRow = i2;
-                b_nCol = j2;
-
-                m_lstMovReDo2.offer(m_Dir);
-                m_iStep[2]--;
-            }
-        } else {
-            if (bk_cArray[i][j] == '-' || bk_cArray[i][j] == '.') {
-                if (bk_cArray[i][j] == '-')
-                    bk_cArray[i][j] = '@';
-                else {
-                    bk_cArray[i][j] = '+';
-                }
-                if (bk_cArray[m_nRow2][m_nCol2] == '@')
-                    bk_cArray[m_nRow2][m_nCol2] = '-';
-                else
-                    bk_cArray[m_nRow2][m_nCol2] = '.';
-
-                m_nRow2 = i;
-                m_nCol2 = j;
-
-                m_lstMovReDo2.offer(m_Dir);
-            }
-        }
-
-        m_iStep[3]--;
-        m_nStep--;
-        mMap.m_iR = m_nRow2;
-        mMap.m_iC = m_nCol2;
+        boolean hadMove = !state.m_lstMovUnDo2.isEmpty();
+        state.unDo2();
+        if (hadMove) resetBackwardHints();
+        mMap.m_iR = state.m_nRow2;
+        mMap.m_iC = state.m_nCol2;
     }
+
 
     private void goHome() {
-        if (m_nRow2 != m_nRow0 || m_nCol2 != m_nCol0) {
-            if (m_nRow2 > -1) {
-                if (bk_cArray[m_nRow2][m_nCol2] == '@')
-                    bk_cArray[m_nRow2][m_nCol2] = '-';
-                else
-                    bk_cArray[m_nRow2][m_nCol2] = '.';
-            }
-
-            if (bk_cArray[m_nRow0][m_nCol0] == '-')
-                bk_cArray[m_nRow0][m_nCol0] = '@';
-            else
-                bk_cArray[m_nRow0][m_nCol0] = '+';
-
-            m_nRow2 = m_nRow0;
-            m_nCol2 = m_nCol0;
-
-            mMap.invalidate();
-        }
+        boolean changed = state.m_nRow2 != state.m_nRow0 || state.m_nCol2 != state.m_nCol0;
+        state.goHome();
+        if (changed) mMap.invalidate();
     }
+
 
     private void myPre(int n) {
         bt_BK.setChecked(false);
@@ -1886,7 +1316,7 @@ public class myGameView extends JFrame implements LockBoard {
         myMaps.m_nTrun = myMaps.curMap.Trun;
         bt_TR.setText(myMaps.m_nTrun + " 转");
         initMap();
-        ls_bk_cArray = bk_cArray;
+        state.ls_bk_cArray = state.bk_cArray;
     }
 
     private void myNext(int n) {
@@ -1896,221 +1326,39 @@ public class myGameView extends JFrame implements LockBoard {
         myMaps.m_nTrun = myMaps.curMap.Trun;
         bt_TR.setText(myMaps.m_nTrun + " 转");
         initMap();
-        ls_bk_cArray = bk_cArray;
+        state.ls_bk_cArray = state.bk_cArray;
     }
 
     private void levelReset(boolean flg) {
+        state.undoAll(flg);
         if (flg) {
-            m_nStep = m_lstMovUnDo2.size();
-            while (m_nStep > 0) unDo2();
-
-            mMap.m_bBoxTo2 = false;
-            mMap.m_bManTo2 = false;
-            mMap.m_boxCanMove2 = false;
-            mMap.m_boxCanCome2 = false;
-
-            mMap.m_iR = m_nRow2;
-            mMap.m_iC = m_nCol2;
+            resetBackwardHints();
+            mMap.m_iR = state.m_nRow2;
+            mMap.m_iC = state.m_nCol2;
         } else {
-            m_nStep = m_lstMovUnDo.size();
-            while (m_nStep > 0) unDo1();
-
-            mMap.m_bBoxTo = false;
-            mMap.m_bManTo = false;
-            mMap.m_boxCanMove = false;
-            mMap.m_boxNoMoved = false;
-            mMap.m_boxNoUsed = false;
-            mMap.m_boxCanCome = false;
-
-            mMap.m_iR = m_nRow;
-            mMap.m_iC = m_nCol;
+            resetForwardHints();
+            mMap.m_iR = state.m_nRow;
+            mMap.m_iC = state.m_nCol;
         }
 
-        m_nStep = 0;
-        m_bBusing = false;
-        m_bMoved = false;
+        state.m_nStep = 0;
+        state.m_bBusing = false;
+        state.m_bMoved = false;
         myMaps.m_StateIsRedy = false;
         myMaps.m_Sets[14] = 2;
         myMaps.m_Sets[5] = 2;
     }
 
-    private void mBoxNum(char[][] level, int mr, int mc) {
-        int nRows = level.length;
-        int nCols = level[0].length;
 
-        boolean[][] Mark = new boolean[nRows][nCols];
-        int F, mr2, mc2;
-
-        int[] dr = {-1, 1, 0, 0, -1, 1, -1, 1};
-        int[] dc = {0, 0, 1, -1, -1, -1, 1, 1};
-
-        Queue<Integer> P = new LinkedList<Integer>();
-        P.offer(mr << 16 | mc);
-        Mark[mr][mc] = true;
-        while (!P.isEmpty()) {
-            F = P.poll();
-            mr = F >>> 16;
-            mc = F & 0x0000FFFF;
-            for (int k = 0; k < 4; k++) {
-                mr2 = mr + dr[k];
-                mc2 = mc + dc[k];
-                if (mr2 < 0 || mr2 >= nRows || mc2 < 0 || mc2 >= nCols ||
-                        Mark[mr2][mc2] || level[mr2][mc2] == '_' || level[mr2][mc2] == '#')
-                    continue;
-
-                P.add(mr2 << 16 | mc2);
-                Mark[mr2][mc2] = true;
-            }
-        }
-
-        short box_Num = 0;
-        m_nGoals = 0;
-        m_nGoals_OK = 0;
-        m_nGoals_2 = 0;
-        m_nGoals_OK_2 = 0;
-        for (int i = 0; i < nRows; i++) {
-            for (int j = 0; j < nCols; j++) {
-                switch (level[i][j]) {
-                    case '$':
-                        if (Mark[i][j]) {
-                            box_Num++;
-                            m_iBoxNum2[i][j] = box_Num;
-                        }
-                        m_nGoals_2++;
-                        break;
-                    case '*':
-                        if (Mark[i][j]) {
-                            box_Num++;
-                            m_iBoxNum2[i][j] = box_Num;
-                        }
-                        m_nGoals_OK++;
-                        m_nGoals++;
-                        m_nGoals_OK_2++;
-                        m_nGoals_2++;
-                        break;
-                    case '.':
-                    case '+':
-                        m_nGoals++;
-                        break;
-                }
-            }
-        }
-    }
 
     private void newGame() {
-        m_bBusing = true;
-        m_nRow = -1;
-        m_nCol = -1;
-        m_nRow2 = -1;
-        m_nCol2 = -1;
-        m_nRow0 = -1;
-        m_nCol0 = -1;
-        m_nRow4 = -1;
-        m_nCol4 = -1;
-
-        if (m_lstMovUnDo != null) m_lstMovUnDo.clear();
-        if (m_lstMovReDo != null) m_lstMovReDo.clear();
-        if (m_lstMovUnDo2 != null) m_lstMovUnDo2.clear();
-        if (m_lstMovReDo2 != null) m_lstMovReDo2.clear();
-        m_lstMovUnDo = new LinkedList<Byte>();
-        m_lstMovReDo = new LinkedList<Byte>();
-        m_lstMovUnDo2 = new LinkedList<Byte>();
-        m_lstMovReDo2 = new LinkedList<Byte>();
-
+        state.beginNewGame();
         try {
             if (myMaps.curMap == null) return;
-            m_iBoxNum = new short[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            m_iBoxNum2 = new short[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            m_Freeze = new byte[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            m_cArray = new char[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            m_cArray0 = new char[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            bk_cArray = new char[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            m_selArray = new byte[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            bk_selArray = new byte[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            ls_bk_cArray = bk_cArray;
+            state.loadLevel(myMaps.curMap.Map, myMaps.curMap.Rows, myMaps.curMap.Cols);
 
-            mark7 = new boolean[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            mark8 = new boolean[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            mark11 = new boolean[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            mark12 = new boolean[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            mark44 = new boolean[myMaps.curMap.Rows][myMaps.curMap.Cols];
-            mark41 = new byte[myMaps.curMap.Rows][myMaps.curMap.Cols];
-
-            String[] Arr = myMaps.curMap.Map.split("\r\n|\n\r|\n|\r|\\|");
-            char ch;
-            for (int i = 0; i < myMaps.curMap.Rows; i++) {
-                for (int j = 0; j < myMaps.curMap.Cols; j++) {
-                    m_iBoxNum[i][j] = -1;
-                    m_iBoxNum2[i][j] = -1;
-                    ch = Arr[i].charAt(j);
-                    switch (ch) {
-                        case '#':
-                        case '_':
-                            m_cArray[i][j] = ch;
-                            m_cArray0[i][j] = ch;
-                            bk_cArray[i][j] = ch;
-                            break;
-                        case '-':
-                            m_cArray[i][j] = ch;
-                            m_cArray0[i][j] = ch;
-                            bk_cArray[i][j] = ch;
-                            mark8[i][j] = true;
-                            break;
-                        case '*':
-                            m_cArray[i][j] = ch;
-                            m_cArray0[i][j] = ch;
-                            bk_cArray[i][j] = ch;
-                            mark7[i][j] = true;
-                            break;
-                        case '+':
-                            m_nRow = i;
-                            m_nCol = j;
-                            m_cArray[i][j] = ch;
-                            m_cArray0[i][j] = ch;
-                            bk_cArray[i][j] = '$';
-                            break;
-                        case '.':
-                            m_nGoals++;
-                            m_cArray[i][j] = ch;
-                            m_cArray0[i][j] = ch;
-                            bk_cArray[i][j] = '$';
-                            mark8[i][j] = true;
-                            break;
-                        case '$':
-                            m_cArray[i][j] = ch;
-                            m_cArray0[i][j] = ch;
-                            bk_cArray[i][j] = '.';
-                            mark7[i][j] = true;
-                            break;
-                        case '@':
-                            m_nRow = i;
-                            m_nCol = j;
-                            m_cArray[i][j] = ch;
-                            m_cArray0[i][j] = ch;
-                            bk_cArray[i][j] = '-';
-                    }
-                }
-            }
-
-            mark14 = null;
-            mark15 = null;
-            mark16 = null;
-            mArray9 = null;
-
-            mBoxNum(m_cArray, m_nRow, m_nCol);
-            mPathfinder = new MyPathfinder(myMaps.curMap.Rows, myMaps.curMap.Cols, () -> myMaps.m_Sets[17] == 1);
-
-            m_iStep[0] = 0;
-            m_iStep[1] = 0;
-            m_Gif_Start = 0;
-            m_iStep[2] = 0;
-            m_iStep[3] = 0;
-            m_nStep = 0;
-
-            mMap.m_iR = m_nRow;
-            mMap.m_iC = m_nCol;
-            m_nRow3 = m_nRow;
-            m_nCol3 = m_nCol;
+            mMap.m_iR = state.m_nRow;
+            mMap.m_iC = state.m_nCol;
 
             mMap.m_bBoxTo = false;
             mMap.m_bBoxTo2 = false;
@@ -2128,15 +1376,11 @@ public class myGameView extends JFrame implements LockBoard {
             myMaps.m_bBiaochi = false;
             myMaps.m_bBianhao = false;
 
-            m_bBusing = false;
-            m_bMoved = false;
-            m_bYanshi = false;
-            m_bYanshi2 = false;
+            state.endNewGame();
             myMaps.m_StateIsRedy = false;
             m_imPort_YASS = "";
             myMaps.m_Sets[14] = 2;
             myMaps.m_Sets[5] = 2;
-            m_nLastSteps = -1;
         } catch (Throwable ex) {
             myStop();
             if (myMaps.curMap != null) {
@@ -2147,6 +1391,7 @@ public class myGameView extends JFrame implements LockBoard {
             }
         }
     }
+
 
     public void initMap() {
         if (mTask != null) {
@@ -2181,7 +1426,7 @@ public class myGameView extends JFrame implements LockBoard {
                 }
             });
             myMaps.m_State = mySQLite.m_SQL.load_State(myMaps.mState1.get(0).id);
-            m_nLastSteps = -1;
+            state.m_nLastSteps = -1;
             int len = myMaps.m_State.ans.length();
             if (len > 0) {
                 formatPath(myMaps.m_State.ans, false);
@@ -2192,29 +1437,29 @@ public class myGameView extends JFrame implements LockBoard {
                 } else {
                     m_imPort_YASS = "";
                 }
-                len = m_lstMovReDo.size();
+                len = state.m_lstMovReDo.size();
                 for (int k = 0; k < len; k++) reDo1();
-                m_bBusing = false;
+                state.m_bBusing = false;
             }
 
             len = myMaps.m_State.bk_ans.length();
             if (len > 0) {
                 try {
-                    m_nRow0 = myMaps.m_State.r;
-                    m_nCol0 = myMaps.m_State.c;
-                    m_nRow2 = m_nRow0;
-                    m_nCol2 = m_nCol0;
-                    bk_cArray[m_nRow2][m_nCol2] = (bk_cArray[m_nRow2][m_nCol2] == '-' ? '@' : '+');
+                    state.m_nRow0 = myMaps.m_State.r;
+                    state.m_nCol0 = myMaps.m_State.c;
+                    state.m_nRow2 = state.m_nRow0;
+                    state.m_nCol2 = state.m_nCol0;
+                    state.bk_cArray[state.m_nRow2][state.m_nCol2] = (state.bk_cArray[state.m_nRow2][state.m_nCol2] == '-' ? '@' : '+');
                     formatPath(myMaps.m_State.bk_ans, true);
-                    len = m_lstMovReDo2.size();
+                    len = state.m_lstMovReDo2.size();
                     for (int k = 0; k < len; k++) reDo2();
-                    m_bBusing = false;
+                    state.m_bBusing = false;
                 } catch (ArrayIndexOutOfBoundsException ex) {
-                    m_nRow0 = -1;
-                    m_nCol0 = -1;
-                    m_nRow2 = m_nRow0;
-                    m_nCol2 = m_nCol0;
-                    m_lstMovReDo2.clear();
+                    state.m_nRow0 = -1;
+                    state.m_nCol0 = -1;
+                    state.m_nRow2 = state.m_nRow0;
+                    state.m_nCol2 = state.m_nCol0;
+                    state.m_lstMovReDo2.clear();
                 }
             }
         }
@@ -2223,7 +1468,7 @@ public class myGameView extends JFrame implements LockBoard {
         mTask.execute();
 
         myMaps.m_MapChange = true;
-        m_bACT_ERROR = false;
+        state.m_bACT_ERROR = false;
         myMaps.isMacroDebug = false;
         mMap.m_lShowAnsInf = false;
     }
@@ -2242,7 +1487,7 @@ public class myGameView extends JFrame implements LockBoard {
      * 否则是「状态」（停在结束位置）——两者处理不同，不要合并。
      */
     private void OpenState() {
-        m_nLastSteps = -1;
+        state.m_nLastSteps = -1;
         myMaps.m_StateIsRedy = false;
         try {
             levelReset(false);  //正推复位
@@ -2259,9 +1504,9 @@ public class myGameView extends JFrame implements LockBoard {
                     m_imPort_YASS = "";
                 }
                 if (myMaps.m_State.solution == 0) {  //答案，停在开始位置；状态，停在结束位置
-                    len = m_lstMovReDo.size();
+                    len = state.m_lstMovReDo.size();
                     for (int k = 0; k < len; k++) reDo1();
-                    m_bBusing = false;
+                    state.m_bBusing = false;
                 } else
                     MyToast.showToast(this, "答案加载成功！", MyToast.LENGTH_SHORT);
             }
@@ -2271,24 +1516,24 @@ public class myGameView extends JFrame implements LockBoard {
                 try {
                     levelReset(true);  //逆推复位
                     try {
-                        if (bk_cArray[m_nRow2][m_nCol2] == '@') bk_cArray[m_nRow2][m_nCol2] = '-';
-                        else if (bk_cArray[m_nRow2][m_nCol2] == '+') bk_cArray[m_nRow2][m_nCol2] = '.';
+                        if (state.bk_cArray[state.m_nRow2][state.m_nCol2] == '@') state.bk_cArray[state.m_nRow2][state.m_nCol2] = '-';
+                        else if (state.bk_cArray[state.m_nRow2][state.m_nCol2] == '+') state.bk_cArray[state.m_nRow2][state.m_nCol2] = '.';
                     } catch (ArrayIndexOutOfBoundsException ex) { }
-                    m_nRow0 = myMaps.m_State.r;
-                    m_nCol0 = myMaps.m_State.c;
-                    m_nRow2 = m_nRow0;
-                    m_nCol2 = m_nCol0;
-                    bk_cArray[m_nRow2][m_nCol2] = (bk_cArray[m_nRow2][m_nCol2] == '-' ? '@' : '+');
+                    state.m_nRow0 = myMaps.m_State.r;
+                    state.m_nCol0 = myMaps.m_State.c;
+                    state.m_nRow2 = state.m_nRow0;
+                    state.m_nCol2 = state.m_nCol0;
+                    state.bk_cArray[state.m_nRow2][state.m_nCol2] = (state.bk_cArray[state.m_nRow2][state.m_nCol2] == '-' ? '@' : '+');
                     formatPath(myMaps.m_State.bk_ans, true);
-                    len = m_lstMovReDo2.size();
+                    len = state.m_lstMovReDo2.size();
                     for (int k = 0; k < len; k++) reDo2();
-                    m_bBusing = false;
+                    state.m_bBusing = false;
                 } catch (ArrayIndexOutOfBoundsException ex) {
-                    m_nRow0 = -1;
-                    m_nCol0 = -1;
-                    m_nRow2 = m_nRow0;
-                    m_nCol2 = m_nCol0;
-                    m_lstMovReDo2.clear();
+                    state.m_nRow0 = -1;
+                    state.m_nCol0 = -1;
+                    state.m_nRow2 = state.m_nRow0;
+                    state.m_nCol2 = state.m_nCol0;
+                    state.m_lstMovReDo2.clear();
                 }
             }
             bt_BK.setChecked(false);  //强制回到正推界面
@@ -2297,211 +1542,26 @@ public class myGameView extends JFrame implements LockBoard {
         }
     }
 
-    private boolean isVisited(byte[][] m_Mrk, int mR, int mC) {
-        try {
-            return m_Mrk[mR][mC] > 0;
-        } catch (Throwable ex) {
-            return true;
-        }
-    }
 
-    private boolean isWall_Box(char[][] m_Arr, int mR, int mC) {
-        try {
-            if (m_Arr[mR][mC] == '#' || m_Arr[mR][mC] == '_' || m_Arr[mR][mC] == '$' || m_Arr[mR][mC] == '*')
-                return true;
-        } catch (Throwable ex) {
-            return true;
-        }
-        return false;
-    }
 
-    private boolean isWall(char[][] m_Arr, int mR, int mC) {
-        try {
-            if (m_Arr[mR][mC] == '#' || m_Arr[mR][mC] == '_') return true;
-        } catch (Throwable ex) {
-            return true;
-        }
-        return false;
-    }
 
-    private boolean isBox(char[][] m_Arr, int mR, int mC) {
-        try {
-            if (m_Arr[mR][mC] == '$') return true;
-        } catch (Throwable ex) { }
-        return false;
-    }
 
-    private boolean isBox_Goal(char[][] m_Arr, int mR, int mC) {
-        try {
-            if (m_Arr[mR][mC] == '*') return true;
-        } catch (Throwable ex) { }
-        return false;
-    }
 
-    private boolean isFloor2(char[][] m_Arr, int mR, int mC) {
-        try {
-            if (m_Arr[mR][mC] == '-' || m_Arr[mR][mC] == '.' || m_Arr[mR][mC] == '@' || m_Arr[mR][mC] == '+')
-                return true;
-        } catch (Throwable ex) { }
-        return false;
-    }
 
-    private boolean isFloor1(char[][] m_Arr, int mR, int mC) {
-        try {
-            if (m_Arr[mR][mC] == '-' || m_Arr[mR][mC] == '@') return true;
-        } catch (Throwable ex) { }
-        return false;
-    }
 
-    private boolean isLock_Count(char[][] m_Arr, short[][] m_mark, int mR, int mC, int mRow, int mCol) {
-        for (int i = 0; i < myMaps.curMap.Rows; i++) {
-            for (int j = 0; j < myMaps.curMap.Cols; j++) {
-                mPathfinder.mark1[i][j] = false;
-            }
-        }
 
-        mArray9[mR][mC] = '$';
-        mPF.boxReachable(true, mR, mC, mRow, mCol);
-        mArray9[mR][mC] = '-';
 
-        boolean is_ALL_OK = true;
-        int n = 0, n2 = 0;
-        int i1, j1;
-        int p = 0, tail = 0;
-        mPathfinder.pt[0] = mRow << 16 | mCol;
-        mPathfinder.mark1[mPathfinder.pt[0] >>> 16][mPathfinder.pt[0] & 0x0000ffff] = true;
-        for (; p <= tail; ) {
-            for (int k = 0; 4 > k; k++) {
-                try {
-                    i1 = (mPathfinder.pt[p] >>> 16) + dr4[k];
-                    j1 = (mPathfinder.pt[p] & 0x0000ffff) + dc4[k];
-                    if (!mPF.mark4[i1][j1]) continue;
-                    if (m_mark[mR][mC] == m_mark[i1][j1] && !mPathfinder.mark1[i1][j1]) {
-                        tail++;
-                        mPathfinder.pt[tail] = i1 << 16 | j1;
-                        mPathfinder.mark1[i1][j1] = true;
 
-                        if (!mark15[i1][j1] && (m_Arr[i1][j1] == '$' || m_Arr[i1][j1] == '*'))
-                            n++;
-                        if (mark15[i1][j1] && m_Arr[i1][j1] == '.') n--;
-                        if (is_ALL_OK && m_Arr[i1][j1] == '$') is_ALL_OK = false;
-                    }
-                    if (mark15[i1][j1] && !mPathfinder.mark1[i1][j1] && m_Arr[i1][j1] == '.')
-                        n2++;
-                } catch (Throwable ex) { }
-            }
-            p++;
-        }
-
-        if (is_ALL_OK) return false;
-        return (n > m_mark[mR][mC] + n2);
-    }
-
-    private boolean isLock_Goal(char[][] m_Arr, int bRow, int bCol, int mRow, int mCol) {
-        mArray9[bRow][bCol] = '$';
-        mPF.boxReachable(false, bRow, bCol, mRow, mCol);
-
-        int n1 = 0, n2 = 0;
-        for (int r = 0; r < myMaps.curMap.Rows; r++) {
-            for (int c = 0; c < myMaps.curMap.Cols; c++) {
-                if (mPF.mark3[r][c]) {
-                    if (m_Arr[r][c] == '$') n1++;
-                    if (m_Arr[r][c] == '.' || m_Arr[r][c] == '+') n2++;
-                }
-            }
-        }
-        mArray9[bRow][bCol] = '-';
-        return n1 > n2;
-    }
-
-    private boolean isLock_Net2(char[][] m_Arr, int b_new_Row, int b_new_Col) {
-        int mRows = m_Arr.length, mCols = m_Arr[0].length;
-
-        for (int i = 0; i < mRows; i++) {
-            for (int j = 0; j < mCols; j++) {
-                mark41[i][j] = 0;
-            }
-        }
-
-        Queue<Integer> Q = new LinkedList<Integer>();
-        int P, r = b_new_Row, c = b_new_Col, r1, c1, r2, c2;
-
-        Q.offer(r << 16 | c);
-        mark41[r][c] = 1;
-        boolean flg = false;
-
-        while (!Q.isEmpty()) {
-            P = Q.poll();
-            r = P >>> 16;
-            c = P & 0x0000ffff;
-
-            flg |= (!isBox_Goal(m_Arr, r, c));
-
-            for (int k = 0; k < 4; k++) {
-                r1 = r + dr4[k];
-                c1 = c + dc4[k];
-                r2 = r + dr4[k] * 2;
-                c2 = c + dc4[k] * 2;
-
-                if (isVisited(mark41, r2, c2) || isWall(m_Arr, r2, c2) || isWall(m_Arr, r1, c1)) {
-                    continue;
-                } else if (isFloor2(m_Arr, r2, c2)) {
-                    return false;
-                } else {
-                    Q.offer(r2 << 16 | c2);
-                    mark41[r2][c2] = 1;
-                }
-            }
-        }
-        return flg;
-    }
-
-    public void m_Net_Inf(char[][] m_Arr, int b_Row, int b_Col) {
-        int mRows = m_Arr.length, mCols = m_Arr[0].length;
-        int P, r = b_Row, c = b_Col, r1, c1, r2, c2;
-
-        for (int i = 0; i < mRows; i++) {
-            for (int j = 0; j < mCols; j++) {
-                mark41[i][j] = 0;
-            }
-        }
-
-        Queue<Integer> Q = new LinkedList<Integer>();
-        Q.offer(r << 16 | c);
-        mark41[r][c] = 1;
-
-        while (!Q.isEmpty()) {
-            P = Q.poll();
-            r = P >>> 16;
-            c = P & 0x0000ffff;
-
-            for (int k = 0; k < 4; k++) {
-                r1 = r + dr4[k];
-                c1 = c + dc4[k];
-                r2 = r + dr4[k] * 2;
-                c2 = c + dc4[k] * 2;
-
-                if (isVisited(mark41, r2, c2) || isWall(m_Arr, r2, c2) || isWall(m_Arr, r1, c1)) {
-                    continue;
-                } else if (isFloor1(m_Arr, r2, c2) || isBox(m_Arr, r2, c2)) {
-                    mark41[r2][c2] = 2;
-                } else {
-                    Q.offer(r2 << 16 | c2);
-                    mark41[r2][c2] = 1;
-                }
-            }
-        }
-    }
 
     private boolean myLock(int bRow, int bCol) {
-        if (m_iR9 > -1) {
-            if (mArray9 != null && isLock_Goal(m_cArray, bRow, bCol, m_nRow, m_nCol)) {
+        if (state.m_iR9 > -1) {
+            if (state.mArray9 != null && state.isLockGoal(state.m_cArray, bRow, bCol, state.m_nRow, state.m_nCol)) {
                 lockDlg.setMessage("这一步造成关卡死锁，继续吗？\n（点位不足）");
                 return true;
-            } else if (freezeDeadlock != null && freezeDeadlock.isDeadlock(bRow, bCol)) {
+            } else if (state.freezeDeadlock != null && state.freezeDeadlock.isDeadlock(bRow, bCol)) {
                 lockDlg.setMessage("这一步造成关卡死锁，继续吗？\n（僵位冻结）");
                 return true;
-            } else if (closedDiagonalLock != null && closedDiagonalLock.isDeadlock(bRow * myMaps.curMap.Cols + bCol)) {
+            } else if (state.closedDiagonalLock != null && state.closedDiagonalLock.isDeadlock(bRow * state.m_cArray[0].length + bCol)) {
                 lockDlg.setMessage("这一步造成关卡死锁，继续吗？\n（闭锁对角）");
                 return true;
             }
@@ -2510,11 +1570,11 @@ public class myGameView extends JFrame implements LockBoard {
     }
 
     private boolean myLock2(int bRow, int bCol) {
-        if (m_iR10 > -1 && mark14 != null) {
-            if (mArray9 != null && isLock_Count(bk_cArray, mark14, bRow, bCol, m_nRow2, m_nCol2)) {
+        if (state.m_iR10 > -1 && state.mark14 != null) {
+            if (state.mArray9 != null && state.isLockCount(state.bk_cArray, state.mark14, bRow, bCol, state.m_nRow2, state.m_nCol2)) {
                 lockDlg.setMessage("这一步造成关卡死锁，继续吗？\n（点位不足）");
                 return true;
-            } else if (isLock_Net2(bk_cArray, bRow, bCol)) {  //「网」型死锁
+            } else if (state.isLockNet2(state.bk_cArray, bRow, bCol)) {  //「网」型死锁
                 lockDlg.setMessage("这一步造成关卡死锁，继续吗？\n（网位互锁）");
                 return true;
             }
@@ -2523,10 +1583,10 @@ public class myGameView extends JFrame implements LockBoard {
     }
 
     private void mySetProgressBar() {
-        m_nLastSteps = -1;
+        state.m_nLastSteps = -1;
         if (bt_BK.isChecked()) {
-            int len = m_lstMovUnDo2.size();
-            int len2 = m_lstMovUnDo2.size() + m_lstMovReDo2.size();
+            int len = state.m_lstMovUnDo2.size();
+            int len2 = state.m_lstMovUnDo2.size() + state.m_lstMovReDo2.size();
             if (len2 > 0) {
                 mMap.curMoves2 = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
                 mMap.m_lGoto2 = true;
@@ -2534,8 +1594,8 @@ public class myGameView extends JFrame implements LockBoard {
                 MyToast.showToast(this, "尚无动作可用！", MyToast.LENGTH_SHORT);
             }
         } else {
-            int len = m_lstMovUnDo.size();
-            int len2 = m_lstMovUnDo.size() + m_lstMovReDo.size();
+            int len = state.m_lstMovUnDo.size();
+            int len2 = state.m_lstMovUnDo.size() + state.m_lstMovReDo.size();
             if (len2 > 0) {
                 mMap.curMoves = (int) (((double) len / len2) * (mMap.stRight - mMap.stLeft));
                 mMap.m_lGoto = true;
@@ -2589,45 +1649,25 @@ public class myGameView extends JFrame implements LockBoard {
     }
 
     public boolean myClearance() {
-        return (myMaps.m_Sets[13] == 0 || m_iStep[2] <= 0) && m_nGoals_OK == m_nGoals && m_iStep[0] > 0;
+        return state.isSolved();
     }
+
 
     public boolean myClearance2() {
-        return (myMaps.m_Sets[13] == 0 || m_iStep[0] <= 0) && m_nGoals_OK_2 == m_nGoals_2 && m_iStep[2] > 0 &&
-                mPathfinder.manTo2(true, bk_cArray, -1, -1, m_nRow2, m_nCol2, m_nRow3, m_nCol3);
+        return state.isSolvedBackward();
     }
 
-    public boolean myMeet() {
-        boolean flg = true;
-        if (m_iStep[2] < 1 || m_bYanshi || m_bYanshi2)
-            return false;
 
-        for (int i = 0; i < m_cArray.length; i++) {
-            for (int j = 0; j < m_cArray[0].length; j++) {
-                if ((m_cArray[i][j] == '$' || m_cArray[i][j] == '*') && bk_cArray[i][j] != '$' && bk_cArray[i][j] != '*') {
-                    return false;
-                }
-            }
-        }
-        if (m_nRow2 != m_nRow || m_nCol2 != m_nCol) {
-            if (bt_BK.isChecked())
-                flg = mPathfinder.manTo2(true, bk_cArray, -1, -1, m_nRow2, m_nCol2, m_nRow, m_nCol);
-            else
-                flg = mPathfinder.manTo2(false, m_cArray, -1, -1, m_nRow, m_nCol, m_nRow2, m_nCol2);
-        }
+    public boolean myMeet() {
+        boolean backward = bt_BK.isChecked();
+        boolean flg = state.meet(backward);
         if (flg) {
-            m_nStep = 0;
-            if (bt_BK.isChecked()) {
-                mMap.m_iR = m_nRow2;
-                mMap.m_iC = m_nCol2;
-            } else {
-                mMap.m_iR = m_nRow;
-                mMap.m_iC = m_nCol;
-            }
-            myMaps.m_Sets[13] = 0;
+            mMap.m_iR = backward ? state.m_nRow2 : state.m_nRow;
+            mMap.m_iC = backward ? state.m_nCol2 : state.m_nCol;
         }
         return flg;
     }
+
 
     public void DoEvent(int act) {
         mMap.m_bBoxTo = false;
@@ -2636,7 +1676,7 @@ public class myGameView extends JFrame implements LockBoard {
         mMap.m_bManTo2 = false;
         mMap.m_boxCanMove = false;
         mMap.m_boxCanMove2 = false;
-        m_bNetLock = false;
+        state.m_bNetLock = false;
         mMap.invalidate();
         switch (act) {
             case 0:
@@ -2649,7 +1689,7 @@ public class myGameView extends JFrame implements LockBoard {
                 break;
             case 1:
                 mMap.Box_Row0 = -1;
-                m_nLastSteps = m_lstMovUnDo.size();
+                state.m_nLastSteps = state.m_lstMovUnDo.size();
                 UpData1(1);
                 break;
             case 2:
@@ -2672,7 +1712,7 @@ public class myGameView extends JFrame implements LockBoard {
                 if (myMaps.m_lstMaps != null) {
                     int n1 = myMaps.m_lstMaps.indexOf(myMaps.curMap);
                     if (n1 > 0) {
-                        if (m_bMoved) {
+                        if (state.m_bMoved) {
                             // 原版 exitDlg2.show()（myGameView.java:2581 / 5190）—— 非阻塞
                             showDialog(exitDlg2);
                         } else myPre(n1 - 1);
@@ -2686,7 +1726,7 @@ public class myGameView extends JFrame implements LockBoard {
                 if (myMaps.m_lstMaps != null) {
                     int n2 = myMaps.m_lstMaps.indexOf(myMaps.curMap);
                     if (n2 >= 0 && n2 + 1 < myMaps.m_lstMaps.size()) {
-                        if (m_bMoved) {
+                        if (state.m_bMoved) {
                             // 原版 exitDlg3.show()（myGameView.java:2592 / 5200）—— 非阻塞
                             showDialog(exitDlg3);
                         } else myNext(n2 + 1);
@@ -2699,9 +1739,9 @@ public class myGameView extends JFrame implements LockBoard {
                 setACT(true);
                 myMaps.m_ActionIsRedy = false;
                 if (bt_BK.isChecked())
-                    myMaps.m_nRecording_Bggin2 = m_lstMovUnDo2.size();
+                    myMaps.m_nRecording_Bggin2 = state.m_lstMovUnDo2.size();
                 else
-                    myMaps.m_nRecording_Bggin = m_lstMovUnDo.size();
+                    myMaps.m_nRecording_Bggin = state.m_lstMovUnDo.size();
                 MyToast.showToast(this, "已送入导入缓存", MyToast.LENGTH_SHORT);
                 break;
             case 10:
@@ -2746,16 +1786,16 @@ public class myGameView extends JFrame implements LockBoard {
             Byte t;
             Iterator<Byte> myItr;
             if (bt_BK.isChecked()) {
-                if (!m_lstMovUnDo2.isEmpty()) {
-                    myItr = m_lstMovUnDo2.iterator();
+                if (!state.m_lstMovUnDo2.isEmpty()) {
+                    myItr = state.m_lstMovUnDo2.iterator();
                     while (myItr.hasNext()) {
                         t = myItr.next();
                         s1.append(Move[t - 1]);
                     }
                 }
                 if (myMaps.isRecording && flg) {
-                    if (!m_lstMovUnDo2.isEmpty() && myMaps.m_nRecording_Bggin2 < m_lstMovUnDo2.size()) {
-                        myItr = m_lstMovUnDo2.iterator();
+                    if (!state.m_lstMovUnDo2.isEmpty() && myMaps.m_nRecording_Bggin2 < state.m_lstMovUnDo2.size()) {
+                        myItr = state.m_lstMovUnDo2.iterator();
                         for (int k = 0; k < myMaps.m_nRecording_Bggin2; k++) {
                             if (myItr.hasNext()) myItr.next();
                             else break;
@@ -2766,8 +1806,8 @@ public class myGameView extends JFrame implements LockBoard {
                         }
                     }
                 } else {
-                    if (!m_lstMovReDo2.isEmpty()) {
-                        myItr = m_lstMovReDo2.descendingIterator();
+                    if (!state.m_lstMovReDo2.isEmpty()) {
+                        myItr = state.m_lstMovReDo2.descendingIterator();
                         while (myItr.hasNext()) {
                             t = myItr.next();
                             s2.append(Move[t - 1]);
@@ -2775,16 +1815,16 @@ public class myGameView extends JFrame implements LockBoard {
                     }
                 }
             } else {
-                if (!m_lstMovUnDo.isEmpty()) {
-                    myItr = m_lstMovUnDo.iterator();
+                if (!state.m_lstMovUnDo.isEmpty()) {
+                    myItr = state.m_lstMovUnDo.iterator();
                     while (myItr.hasNext()) {
                         t = myItr.next();
                         s1.append(Move[t - 1]);
                     }
                 }
                 if (myMaps.isRecording && flg) {
-                    if (!m_lstMovUnDo.isEmpty() && myMaps.m_nRecording_Bggin < m_lstMovUnDo.size()) {
-                        myItr = m_lstMovUnDo.iterator();
+                    if (!state.m_lstMovUnDo.isEmpty() && myMaps.m_nRecording_Bggin < state.m_lstMovUnDo.size()) {
+                        myItr = state.m_lstMovUnDo.iterator();
                         for (int k = 0; k < myMaps.m_nRecording_Bggin; k++) {
                             if (myItr.hasNext()) myItr.next();
                             else break;
@@ -2795,8 +1835,8 @@ public class myGameView extends JFrame implements LockBoard {
                         }
                     }
                 } else {
-                    if (!m_lstMovReDo.isEmpty()) {
-                        myItr = m_lstMovReDo.descendingIterator();
+                    if (!state.m_lstMovReDo.isEmpty()) {
+                        myItr = state.m_lstMovReDo.descendingIterator();
                         while (myItr.hasNext()) {
                             t = myItr.next();
                             s2.append(Move[t - 1]);
@@ -2809,158 +1849,34 @@ public class myGameView extends JFrame implements LockBoard {
         } catch (Throwable ex) { }
     }
 
-    private int getStep(LinkedList<Byte> m_lstMove) {
-        if (m_nGoals == 1) return m_lstMove.size();
-        int len = m_lstMove.size();
-        int[] boxRC = {1000, 1000};
-        int i = 0, j = 0;
-        byte mDir;
-        int n = 0, k = 0;
-        boolean flg = false;
-        Iterator<Byte> descItr = m_lstMove.descendingIterator();
-        while (descItr.hasNext()) {
-            mDir = descItr.next();
-            k++;
-            switch (mDir) {
-                case 1: j--; break;
-                case 2: i--; break;
-                case 3: j++; break;
-                case 4: i++; break;
-                case 5:
-                    j--;
-                    if (boxRC[0] != i || boxRC[1] != j) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i;
-                    boxRC[1] = j - 1;
-                    break;
-                case 6:
-                    i--;
-                    if (boxRC[0] != i || boxRC[1] != j) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i - 1;
-                    boxRC[1] = j;
-                    break;
-                case 7:
-                    j++;
-                    if (boxRC[0] != i || boxRC[1] != j) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i;
-                    boxRC[1] = j + 1;
-                    break;
-                case 8:
-                    i++;
-                    if (boxRC[0] != i || boxRC[1] != j) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i + 1;
-                    boxRC[1] = j;
-                    break;
-            }
-        }
-        if (flg) return n;
-        return len;
-    }
 
-    private int getStep2(LinkedList<Byte> m_lstMove) {
-        if (m_nGoals == 1) return m_lstMove.size();
-        int len = m_lstMove.size();
-        int[] boxRC = {1000, 1000};
-        int i = 0, j = 0;
-        byte mDir;
-        int n = 0, k = 0;
-        boolean flg = false;
-        Iterator<Byte> descItr = m_lstMove.descendingIterator();
-        while (descItr.hasNext()) {
-            mDir = descItr.next();
-            k++;
-            switch (mDir) {
-                case 1: j--; break;
-                case 2: i--; break;
-                case 3: j++; break;
-                case 4: i++; break;
-                case 5:
-                    if (boxRC[0] != i || boxRC[1] != j + 1) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i;
-                    boxRC[1] = j;
-                    j--;
-                    break;
-                case 6:
-                    if (boxRC[0] != i + 1 || boxRC[1] != j) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i;
-                    boxRC[1] = j;
-                    i--;
-                    break;
-                case 7:
-                    if (boxRC[0] != i || boxRC[1] != j - 1) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i;
-                    boxRC[1] = j;
-                    j++;
-                    break;
-                case 8:
-                    if (boxRC[0] != i - 1 || boxRC[1] != j) {
-                        if (flg) return n;
-                        flg = true;
-                    }
-                    n = k;
-                    boxRC[0] = i;
-                    boxRC[1] = j;
-                    i++;
-                    break;
-            }
-        }
-        if (flg) return n;
-        return len;
-    }
 
     public void zhengniHE2() {
-        if (m_nRow2 != m_nRow3 || m_nCol2 != m_nCol3)
-            FindPath(m_nRow3, m_nCol3, true);
+        if (state.m_nRow2 != state.m_nRow3 || state.m_nCol2 != state.m_nCol3)
+            FindPath(state.m_nRow3, state.m_nCol3, true);
 
-        int len = m_lstMovReDo2.size();
+        int len = state.m_lstMovReDo2.size();
         for (int k = 0; k < len; k++) reDo2();
-        m_bBusing = false;
+        state.m_bBusing = false;
 
         byte t;
         int s = 0;
-        len = m_lstMovUnDo2.size();
+        len = state.m_lstMovUnDo2.size();
         for (int k = 0; k < len; k++) {
-            t = m_lstMovUnDo2.get(k);
+            t = state.m_lstMovUnDo2.get(k);
             if (t < 5) s++;
             else break;
         }
 
-        len = m_lstMovUnDo.size();
+        len = state.m_lstMovUnDo.size();
         for (int k = 0; k < len; k++) unDo1();
-        m_lstMovReDo.clear();
-        m_lstMovUnDo.clear();
-        m_iStep[0] = 0;
-        m_iStep[1] = 0;
+        state.m_lstMovReDo.clear();
+        state.m_lstMovUnDo.clear();
+        state.m_iStep[0] = 0;
+        state.m_iStep[1] = 0;
 
         Byte mDir;
-        Iterator<Byte> myItr = m_lstMovUnDo2.iterator();
+        Iterator<Byte> myItr = state.m_lstMovUnDo2.iterator();
         for (int k = 0; k < s; k++) {
             if (myItr.hasNext()) myItr.next();
             else break;
@@ -2969,66 +1885,66 @@ public class myGameView extends JFrame implements LockBoard {
             mDir = myItr.next();
             switch (mDir) {
                 case -1:
-                case 1: m_lstMovReDo.offer((byte) 3); break;
+                case 1: state.m_lstMovReDo.offer((byte) 3); break;
                 case -2:
-                case 2: m_lstMovReDo.offer((byte) 4); break;
+                case 2: state.m_lstMovReDo.offer((byte) 4); break;
                 case -3:
-                case 3: m_lstMovReDo.offer((byte) 1); break;
+                case 3: state.m_lstMovReDo.offer((byte) 1); break;
                 case -4:
-                case 4: m_lstMovReDo.offer((byte) 2); break;
+                case 4: state.m_lstMovReDo.offer((byte) 2); break;
                 case -5:
-                case 5: m_lstMovReDo.offer((byte) 7); break;
+                case 5: state.m_lstMovReDo.offer((byte) 7); break;
                 case -6:
-                case 6: m_lstMovReDo.offer((byte) 8); break;
+                case 6: state.m_lstMovReDo.offer((byte) 8); break;
                 case -7:
-                case 7: m_lstMovReDo.offer((byte) 5); break;
+                case 7: state.m_lstMovReDo.offer((byte) 5); break;
                 case -8:
-                case 8: m_lstMovReDo.offer((byte) 6); break;
+                case 8: state.m_lstMovReDo.offer((byte) 6); break;
             }
         }
         mMap.invalidate();
     }
 
     public void zhengniHE() {
-        if (m_nRow2 != m_nRow || m_nCol2 != m_nCol) {
-            FindPath(m_nRow2, m_nCol2, false);
+        if (state.m_nRow2 != state.m_nRow || state.m_nCol2 != state.m_nCol) {
+            FindPath(state.m_nRow2, state.m_nCol2, false);
         } else {
-            m_lstMovReDo.clear();
+            state.m_lstMovReDo.clear();
         }
 
         byte t;
         int s = 0;
-        int len = m_lstMovUnDo2.size();
+        int len = state.m_lstMovUnDo2.size();
         for (int k = 0; k < len; k++) {
-            t = m_lstMovUnDo2.get(k);
+            t = state.m_lstMovUnDo2.get(k);
             if (t < 5) {
                 s++;
             } else break;
         }
 
         Byte mDir;
-        len = m_lstMovUnDo2.size();
-        Iterator<Byte> myItr = m_lstMovUnDo2.descendingIterator();
+        len = state.m_lstMovUnDo2.size();
+        Iterator<Byte> myItr = state.m_lstMovUnDo2.descendingIterator();
         while (myItr.hasNext()) {
             mDir = myItr.next();
             if (--len < s) break;
             switch (mDir) {
                 case -1:
-                case 1: m_lstMovReDo.offerFirst((byte) 3); break;
+                case 1: state.m_lstMovReDo.offerFirst((byte) 3); break;
                 case -2:
-                case 2: m_lstMovReDo.offerFirst((byte) 4); break;
+                case 2: state.m_lstMovReDo.offerFirst((byte) 4); break;
                 case -3:
-                case 3: m_lstMovReDo.offerFirst((byte) 1); break;
+                case 3: state.m_lstMovReDo.offerFirst((byte) 1); break;
                 case -4:
-                case 4: m_lstMovReDo.offerFirst((byte) 2); break;
+                case 4: state.m_lstMovReDo.offerFirst((byte) 2); break;
                 case -5:
-                case 5: m_lstMovReDo.offerFirst((byte) 7); break;
+                case 5: state.m_lstMovReDo.offerFirst((byte) 7); break;
                 case -6:
-                case 6: m_lstMovReDo.offerFirst((byte) 8); break;
+                case 6: state.m_lstMovReDo.offerFirst((byte) 8); break;
                 case -7:
-                case 7: m_lstMovReDo.offerFirst((byte) 5); break;
+                case 7: state.m_lstMovReDo.offerFirst((byte) 5); break;
                 case -8:
-                case 8: m_lstMovReDo.offerFirst((byte) 6); break;
+                case 8: state.m_lstMovReDo.offerFirst((byte) 6); break;
             }
         }
         mMap.invalidate();
@@ -3053,16 +1969,16 @@ public class myGameView extends JFrame implements LockBoard {
         Iterator<Byte> myItr;
 
         char[] Move = {'l', 'u', 'r', 'd', 'L', 'U', 'R', 'D'};
-        if (!m_lstMovUnDo.isEmpty()) {
-            myItr = m_lstMovUnDo.iterator();
+        if (!state.m_lstMovUnDo.isEmpty()) {
+            myItr = state.m_lstMovUnDo.iterator();
             while (myItr.hasNext()) {
                 t = myItr.next();
                 s1.append(Move[t - 1]);
             }
         }
 
-        if (m_Solution == 0 && !m_lstMovUnDo2.isEmpty()) {
-            myItr = m_lstMovUnDo2.iterator();
+        if (m_Solution == 0 && !state.m_lstMovUnDo2.isEmpty()) {
+            myItr = state.m_lstMovUnDo2.iterator();
             while (myItr.hasNext()) {
                 t = myItr.next();
                 s2.append(Move[t - 1]);
@@ -3077,15 +1993,15 @@ public class myGameView extends JFrame implements LockBoard {
             m_imPort_YASS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         }
 
-        if (m_Solution == 0 && (m_lstMovUnDo.size() > myMaps.m_nMaxSteps || m_lstMovUnDo2.size() > myMaps.m_nMaxSteps) || m_Solution == 1 && m_lstMovUnDo.size() > myMaps.m_nMaxSteps) {
+        if (m_Solution == 0 && (state.m_lstMovUnDo.size() > myMaps.m_nMaxSteps || state.m_lstMovUnDo2.size() > myMaps.m_nMaxSteps) || m_Solution == 1 && state.m_lstMovUnDo.size() > myMaps.m_nMaxSteps) {
             final StringBuilder str = new StringBuilder();
             str.append(myMaps.curMap.Map).append("\nTitle: ").append(myMaps.curMap.Title).append("\nAuthor: ").append(myMaps.curMap.Author);
             str.append("\nComment:\n").append(myMaps.curMap.Comment).append("\nComment-End:\n");
 
             if (m_Solution == 0) {
-                str.append(s1).append("\n[").append(m_nRow0).append(", ").append(m_nCol0).append("]").append(s2);
+                str.append(s1).append("\n[").append(state.m_nRow0).append(", ").append(state.m_nCol0).append("]").append(s2);
             } else {
-                str.append("Solution (moves ").append(m_iStep[1]).append(", pushes ").append(m_iStep[0]).append(": ");
+                str.append("Solution (moves ").append(state.m_iStep[1]).append(", pushes ").append(state.m_iStep[0]).append(": ");
                 str.append(m_imPort_YASS);
                 str.append(s1);
             }
@@ -3109,12 +2025,12 @@ public class myGameView extends JFrame implements LockBoard {
         } else {
             long hh = mySQLite.m_SQL.add_S(myMaps.curMap.Level_id,
                     m_Solution,
-                    m_iStep[1],
-                    m_iStep[0],
-                    m_Solution == 0 ? m_iStep[3] : 0,
-                    m_Solution == 0 ? m_iStep[2] : 0,
-                    m_Solution == 0 ? m_nRow0 : -1,
-                    m_Solution == 0 ? m_nCol0 : -1,
+                    state.m_iStep[1],
+                    state.m_iStep[0],
+                    m_Solution == 0 ? state.m_iStep[3] : 0,
+                    m_Solution == 0 ? state.m_iStep[2] : 0,
+                    m_Solution == 0 ? state.m_nRow0 : -1,
+                    m_Solution == 0 ? state.m_nCol0 : -1,
                     s1.toString(),
                     s2.toString(),
                     myMaps.curMap.key,
@@ -3122,7 +2038,7 @@ public class myGameView extends JFrame implements LockBoard {
                     m_Solution == 0 ? "" : myMaps.curMap.Map0,
                     m_imPort_YASS);
 
-            m_bMoved = false;
+            state.m_bMoved = false;
             if (hh > 0) {
                 if (m_Solution == 1) {
                     myMaps.curMap.Solved |= (m_Solution == 1);
@@ -3131,9 +2047,9 @@ public class myGameView extends JFrame implements LockBoard {
                     ans.id = hh;
                     ans.pid = myMaps.curMap.Level_id;
                     ans.pkey = myMaps.curMap.key;
-                    ans.moves = m_iStep[1];
-                    ans.pushs = m_iStep[0];
-                    ans.inf = "移动: " + m_iStep[1] + ", 推动: " + m_iStep[0];
+                    ans.moves = state.m_iStep[1];
+                    ans.pushs = state.m_iStep[0];
+                    ans.inf = "移动: " + state.m_iStep[1] + ", 推动: " + state.m_iStep[0];
                     ans.time = m_imPort_YASS;
                     myMaps.mState2.add(ans);
                     mMap.invalidate();
@@ -3143,7 +2059,7 @@ public class myGameView extends JFrame implements LockBoard {
             } else if (hh == 0) {
                 if (m_Solution == 1) {
                     myMaps.curMap.Solved |= (m_Solution == 1);
-                    MyToast.showToast(this, "答案有重复，未再保存！\n移动：" + (m_iStep[1] + m_lstMovReDo.size()) + "，推动：" + (m_iStep[0] + m_iStep[2]), MyToast.LENGTH_LONG);
+                    MyToast.showToast(this, "答案有重复，未再保存！\n移动：" + (state.m_iStep[1] + state.m_lstMovReDo.size()) + "，推动：" + (state.m_iStep[0] + state.m_iStep[2]), MyToast.LENGTH_LONG);
                 } else {
                     MyToast.showToast(this, "有重复，已重排！", MyToast.LENGTH_LONG);
                 }
@@ -3160,15 +2076,15 @@ public class myGameView extends JFrame implements LockBoard {
         Iterator<Byte> myItr;
 
         char[] Move = {'l', 'u', 'r', 'd', 'L', 'U', 'R', 'D'};
-        if (!m_lstMovUnDo.isEmpty()) {
-            myItr = m_lstMovUnDo.iterator();
+        if (!state.m_lstMovUnDo.isEmpty()) {
+            myItr = state.m_lstMovUnDo.iterator();
             while (myItr.hasNext()) {
                 t = myItr.next();
                 s1.append(Move[t - 1]);
             }
         }
-        if (!m_lstMovReDo.isEmpty()) {
-            myItr = m_lstMovReDo.descendingIterator();
+        if (!state.m_lstMovReDo.isEmpty()) {
+            myItr = state.m_lstMovReDo.descendingIterator();
             while (myItr.hasNext()) {
                 t = myItr.next();
                 s1.append(Move[t - 1]);
@@ -3183,11 +2099,11 @@ public class myGameView extends JFrame implements LockBoard {
             m_imPort_YASS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         }
 
-        if (m_lstMovUnDo.size() + m_lstMovReDo.size() > myMaps.m_nMaxSteps) {
+        if (state.m_lstMovUnDo.size() + state.m_lstMovReDo.size() > myMaps.m_nMaxSteps) {
             final StringBuilder str = new StringBuilder();
             str.append(myMaps.curMap.Map).append("\nTitle: ").append(myMaps.curMap.Title).append("\nAuthor: ").append(myMaps.curMap.Author);
             str.append("\nComment:\n").append(myMaps.curMap.Comment).append("\nComment-End:\n");
-            str.append("Solution (moves ").append(m_iStep[1] + m_lstMovReDo.size()).append(", pushes ").append(m_iStep[0] + m_iStep[2]).append(": ");
+            str.append("Solution (moves ").append(state.m_iStep[1] + state.m_lstMovReDo.size()).append(", pushes ").append(state.m_iStep[0] + state.m_iStep[2]).append(": ");
             str.append(m_imPort_YASS);
             str.append(s1);
 
@@ -3212,8 +2128,8 @@ public class myGameView extends JFrame implements LockBoard {
         } else {
             long hh = mySQLite.m_SQL.add_S(myMaps.curMap.Level_id,
                     myMaps.curMap.Level_id > 0 ? 1 : 0,
-                    m_iStep[1] + m_lstMovReDo.size(),
-                    m_iStep[0] + m_iStep[2],
+                    state.m_iStep[1] + state.m_lstMovReDo.size(),
+                    state.m_iStep[0] + state.m_iStep[2],
                     0,
                     0,
                     -1,
@@ -3226,14 +2142,14 @@ public class myGameView extends JFrame implements LockBoard {
                     m_imPort_YASS);
 
             myMaps.curMap.Solved = true;
-            m_bMoved = false;
+            state.m_bMoved = false;
             if (myMaps.curMap.Level_id > 0) {
                 if (hh > 0) {
                     state_Node ans = new state_Node();
                     ans.id = hh;
                     ans.pid = myMaps.curMap.Level_id;
                     ans.pkey = myMaps.curMap.key;
-                    ans.inf = "移动: " + m_iStep[1] + ", 推动: " + m_iStep[0];
+                    ans.inf = "移动: " + state.m_iStep[1] + ", 推动: " + state.m_iStep[0];
                     ans.time = m_imPort_YASS;
                     myMaps.mState2.add(ans);
                     // 原版 myGameView.java:3272 —— AlertDialog(THEME_HOLO_DARK) 标题「正逆相合或通关！」
@@ -3242,8 +2158,8 @@ public class myGameView extends JFrame implements LockBoard {
                             "答案成功保存！\n(可用进退键观看通关演示)", "确定");
                 } else if (hh == 0) {
                     HoloMessageDialog.showNonModal(this, "正逆相合或通关！",
-                            "答案有重复！\n移动：" + (m_iStep[1] + m_lstMovReDo.size())
-                                    + "，推动：" + (m_iStep[0] + m_iStep[2])
+                            "答案有重复！\n移动：" + (state.m_iStep[1] + state.m_lstMovReDo.size())
+                                    + "，推动：" + (state.m_iStep[0] + state.m_iStep[2])
                                     + "，\n本次未做保存！\n(可用进退键观看通关演示)", "确定");
                 } else {
                     HoloMessageDialog.showNonModal(this, "正逆相合或通关！",
@@ -3316,22 +2232,22 @@ public class myGameView extends JFrame implements LockBoard {
 
     /** 原版 {@code R.id.player_Home}「退至首」。 */
     void onHome() {
-        m_bYanshi = false;
-        m_bYanshi2 = false;
+        state.m_bYanshi = false;
+        state.m_bYanshi2 = false;
         if (bt_BK.isChecked()) {
-            if (m_lstMovUnDo2.isEmpty()) {
+            if (state.m_lstMovUnDo2.isEmpty()) {
                 MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
-                m_bBusing = false;
+                state.m_bBusing = false;
             } else {
-                m_nStep = m_lstMovUnDo2.size();
+                state.m_nStep = state.m_lstMovUnDo2.size();
                 UpData4(1);
             }
         } else {
-            if (m_lstMovUnDo.isEmpty()) {
+            if (state.m_lstMovUnDo.isEmpty()) {
                 MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
-                m_bBusing = false;
+                state.m_bBusing = false;
             } else {
-                m_nStep = m_lstMovUnDo.size();
+                state.m_nStep = state.m_lstMovUnDo.size();
                 UpData2(1);
             }
         }
@@ -3339,25 +2255,25 @@ public class myGameView extends JFrame implements LockBoard {
 
     /** 原版 {@code R.id.player_End}「进至尾」。 */
     void onEnd() {
-        m_bYanshi = false;
-        m_bYanshi2 = false;
+        state.m_bYanshi = false;
+        state.m_bYanshi2 = false;
         if (bt_BK.isChecked()) {
-            if (m_lstMovReDo2.isEmpty()) {
+            if (state.m_lstMovReDo2.isEmpty()) {
                 MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
-                m_bBusing = false;
+                state.m_bBusing = false;
             } else {
-                if (m_lstMovUnDo2.isEmpty()) goHome();
-                m_nStep = m_lstMovReDo2.size();
+                if (state.m_lstMovUnDo2.isEmpty()) goHome();
+                state.m_nStep = state.m_lstMovReDo2.size();
                 UpData3(1);
             }
         } else {
-            if (m_lstMovReDo.isEmpty()) {
+            if (state.m_lstMovReDo.isEmpty()) {
                 MyToast.showToast(this, "没有了！", MyToast.LENGTH_SHORT);
-                m_bBusing = false;
+                state.m_bBusing = false;
             } else {
-                m_nStep = m_lstMovReDo.size();
+                state.m_nStep = state.m_lstMovReDo.size();
                 mMap.Box_Row0 = -1;
-                m_nLastSteps = -1;
+                state.m_nLastSteps = -1;
                 UpData1(1);
             }
         }
@@ -3365,9 +2281,9 @@ public class myGameView extends JFrame implements LockBoard {
 
     /** 原版 {@code R.id.player_save}「保存状态」。 */
     void onSaveState() {
-        if (m_lstMovUnDo.size() > 0 || m_lstMovUnDo2.size() > 0) {
-            if ((myMaps.m_Sets[13] == 0 || m_iStep[2] <= 0) && m_nGoals_OK == m_nGoals
-                    && m_iStep[0] > 0 && myMaps.curMap.Level_id > 0)
+        if (state.m_lstMovUnDo.size() > 0 || state.m_lstMovUnDo2.size() > 0) {
+            if ((myMaps.m_Sets[13] == 0 || state.m_iStep[2] <= 0) && state.m_nGoals_OK == state.m_nGoals
+                    && state.m_iStep[0] > 0 && myMaps.curMap.Level_id > 0)
                 saveAns(1);
             else
                 saveAns(0);
@@ -3409,22 +2325,22 @@ public class myGameView extends JFrame implements LockBoard {
             char[] Move = {'l', 'u', 'r', 'd', 'L', 'U', 'R', 'D'};
             StringBuilder s1 = new StringBuilder();
             StringBuilder s2 = new StringBuilder();
-            if (!m_lstMovUnDo.isEmpty()) {
-                for (Byte t : m_lstMovUnDo) {
+            if (!state.m_lstMovUnDo.isEmpty()) {
+                for (Byte t : state.m_lstMovUnDo) {
                     s1.append(Move[t - 1]);
                 }
             }
-            if (!m_lstMovUnDo2.isEmpty()) {
-                s2.append("[").append(m_nRow0).append(", ").append(m_nCol0).append("]");
-                for (Byte t : m_lstMovUnDo2) {
+            if (!state.m_lstMovUnDo2.isEmpty()) {
+                s2.append("[").append(state.m_nRow0).append(", ").append(state.m_nCol0).append("]");
+                for (Byte t : state.m_lstMovUnDo2) {
                     s2.append(Move[t - 1]);
                 }
             }
 
             // 自动保存一下当前状态（自动查重），避免 yass 闪退造成丢失
-            if ((m_iStep[1] > 0 || m_iStep[3] > 0)
-                    && mySQLite.m_SQL.count_S(myMaps.curMap.Level_id, m_iStep[1], m_iStep[0],
-                    m_iStep[3], m_iStep[2], m_nRow0, m_nCol0,
+            if ((state.m_iStep[1] > 0 || state.m_iStep[3] > 0)
+                    && mySQLite.m_SQL.count_S(myMaps.curMap.Level_id, state.m_iStep[1], state.m_iStep[0],
+                    state.m_iStep[3], state.m_iStep[2], state.m_nRow0, state.m_nCol0,
                     myMaps.getCRC32(s1.toString() + s2.toString())) <= 0) {
                 if (m_imPort_YASS != null && m_imPort_YASS.toLowerCase().indexOf("yass") >= 0) {
                     m_imPort_YASS = "[YASS]" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
@@ -3436,12 +2352,12 @@ public class myGameView extends JFrame implements LockBoard {
 
                 long hh = mySQLite.m_SQL.add_S(myMaps.curMap.Level_id,
                         3,
-                        m_iStep[1],
-                        m_iStep[0],
-                        m_iStep[3],
-                        m_iStep[2],
-                        m_nRow0,
-                        m_nCol0,
+                        state.m_iStep[1],
+                        state.m_iStep[0],
+                        state.m_iStep[3],
+                        state.m_iStep[2],
+                        state.m_nRow0,
+                        state.m_nCol0,
                         s1.toString(),
                         s2.toString(),
                         myMaps.curMap.key,
@@ -3449,7 +2365,7 @@ public class myGameView extends JFrame implements LockBoard {
                         "",
                         m_imPort_YASS);
 
-                m_bMoved = false;
+                state.m_bMoved = false;
                 if (hh > 0) {
                     MyToast.showToast(this, "状态已保存！", MyToast.LENGTH_SHORT);
                 }
@@ -3457,7 +2373,7 @@ public class myGameView extends JFrame implements LockBoard {
 
             // 原版：new Intent(ACTION_MAIN) + addCategory(CATEGORY_LAUNCHER)
             //       + setComponent(YASS 的 Activity) + setAction("nl.joriswit.sokosolver.SOLVE")
-            //       + putExtra("LEVEL", myMaps.getLocale(m_cArray))
+            //       + putExtra("LEVEL", myMaps.getLocale(state.m_cArray))
             //       + startActivityForResult(intent3, 1)
             // PC 无跨应用 Intent → 恒抛，等价于真机未安装 YASS。
             throw new UnsupportedOperationException(
@@ -3490,7 +2406,7 @@ public class myGameView extends JFrame implements LockBoard {
 
     /**
      * 原版 {@code R.id.player_IN}「导入」：进入 {@link myActGMView}（动作管理）录入动作。
-     * 原版还把 {@code LOCAL}（{@code myMaps.getLocale(m_cArray)}）塞进 Bundle，
+     * 原版还把 {@code LOCAL}（{@code myMaps.getLocale(state.m_cArray)}）塞进 Bundle，
      * 但 {@code myActGMView} 里接收那行是**注释掉的** —— 所以不用传。
      */
     void onImport() {
@@ -3504,9 +2420,9 @@ public class myGameView extends JFrame implements LockBoard {
         setACT(false);                                  // 非录制模式
         myMaps.m_ActionIsRedy = false;
         if (bt_BK.isChecked())
-            myMaps.m_nRecording_Bggin2 = m_lstMovUnDo2.size();  // 逆推录制起始点
+            myMaps.m_nRecording_Bggin2 = state.m_lstMovUnDo2.size();  // 逆推录制起始点
         else
-            myMaps.m_nRecording_Bggin = m_lstMovUnDo.size();    // 正推录制起始点
+            myMaps.m_nRecording_Bggin = state.m_lstMovUnDo.size();    // 正推录制起始点
     }
 
     /**
@@ -3535,7 +2451,7 @@ public class myGameView extends JFrame implements LockBoard {
         } finally {
             myMaps.m_ActionIsRedy = false;
             mMap.invalidate();
-            m_bBusing = false;
+            state.m_bBusing = false;
             if (!m_imPort_YASS.toLowerCase().contains("yass")
                     && !m_imPort_YASS.contains("导入")) {
                 m_imPort_YASS = "[导入]";
@@ -3577,13 +2493,13 @@ public class myGameView extends JFrame implements LockBoard {
                 levelReset(true);
                 removeBackwardPlayer();
             }
-            m_nRow2 = row;
-            m_nCol2 = col;
-            m_nRow0 = row;
-            m_nCol0 = col;
+            state.m_nRow2 = row;
+            state.m_nCol2 = col;
+            state.m_nRow0 = row;
+            state.m_nCol0 = col;
             hasPlayer = placeBackwardPlayer(row, col);
         } else if (isBackwardPlayerPositionValid()) {
-            char player = bk_cArray[m_nRow2][m_nCol2];
+            char player = state.bk_cArray[state.m_nRow2][state.m_nCol2];
             hasPlayer = player == '+' || player == '@';
         }
 
@@ -3595,32 +2511,32 @@ public class myGameView extends JFrame implements LockBoard {
     }
 
     private boolean isBackwardPlayerPositionValid() {
-        return m_nRow2 >= 0 && m_nCol2 >= 0
-                && m_nRow2 < myMaps.curMap.Rows && m_nCol2 < myMaps.curMap.Cols;
+        return state.m_nRow2 >= 0 && state.m_nCol2 >= 0
+                && state.m_nRow2 < myMaps.curMap.Rows && state.m_nCol2 < myMaps.curMap.Cols;
     }
 
     private boolean placeBackwardPlayer(int row, int col) {
         if (row < 0 || col < 0 || row >= myMaps.curMap.Rows || col >= myMaps.curMap.Cols) return false;
-        m_nRow2 = row;
-        m_nCol2 = col;
-        m_nRow0 = row;
-        m_nCol0 = col;
-        if (bk_cArray[row][col] == '.') {
-            bk_cArray[row][col] = '+';
+        state.m_nRow2 = row;
+        state.m_nCol2 = col;
+        state.m_nRow0 = row;
+        state.m_nCol0 = col;
+        if (state.bk_cArray[row][col] == '.') {
+            state.bk_cArray[row][col] = '+';
             return true;
         }
-        if (bk_cArray[row][col] == '-') {
-            bk_cArray[row][col] = '@';
+        if (state.bk_cArray[row][col] == '-') {
+            state.bk_cArray[row][col] = '@';
             return true;
         }
         return false;
     }
 
     private void removeBackwardPlayer() {
-        if (bk_cArray[m_nRow2][m_nCol2] == '+') {
-            bk_cArray[m_nRow2][m_nCol2] = '.';
-        } else if (bk_cArray[m_nRow2][m_nCol2] == '@') {
-            bk_cArray[m_nRow2][m_nCol2] = '-';
+        if (state.bk_cArray[state.m_nRow2][state.m_nCol2] == '+') {
+            state.bk_cArray[state.m_nRow2][state.m_nCol2] = '.';
+        } else if (state.bk_cArray[state.m_nRow2][state.m_nCol2] == '@') {
+            state.bk_cArray[state.m_nRow2][state.m_nCol2] = '-';
         }
     }
 
@@ -3634,18 +2550,18 @@ public class myGameView extends JFrame implements LockBoard {
                 myMaps.m_ActionIsPos = true;
             }
             if (myMaps.m_ActionIsPos) {
-                m_lstMovedHistory.clear();
-                Iterator<Byte> it = m_lstMovUnDo.descendingIterator();
+                state.m_lstMovedHistory.clear();
+                Iterator<Byte> it = state.m_lstMovUnDo.descendingIterator();
                 while (it.hasNext()) {
-                    m_lstMovedHistory.offer(it.next());
+                    state.m_lstMovedHistory.offer(it.next());
                 }
             }
         }
 
         if (!myMaps.m_ActionIsPos) levelReset(false);
 
-        m_nMacro_Row = m_nRow;
-        m_nMacro_Col = m_nCol;
+        m_nMacro_Row = state.m_nRow;
+        m_nMacro_Col = state.m_nCol;
         mMap.myMacro.clear();
         mMap.myMacro.add(0);
         mMap.myMacroInf = "";
@@ -3653,7 +2569,7 @@ public class myGameView extends JFrame implements LockBoard {
         StopMicro();
         mMicroTask = new RunMicroTask(this);
         mMicroTask.execute(0, myMaps.sAction.length - 1);
-        if (!m_lstMovReDo.isEmpty()) m_lstMovReDo.clear();
+        if (!state.m_lstMovReDo.isEmpty()) state.m_lstMovReDo.clear();
     }
 
     /**
@@ -3740,7 +2656,7 @@ public class myGameView extends JFrame implements LockBoard {
         StringBuilder s_XSB1 = new StringBuilder();  // 关卡正推现场
         StringBuilder s_XSB8 = new StringBuilder();  // 关卡正推现场 -- 旋转
         StringBuilder s_Lurd = new StringBuilder();  // Lurd
-        boolean isANS = (m_nGoals_OK == m_nGoals);
+        boolean isANS = (state.m_nGoals_OK == state.m_nGoals);
 
         // 关卡初态
         s_XSB.append(myMaps.curMap.Map).append("\nTitle: ").append(myMaps.curMap.Title)
@@ -3753,9 +2669,9 @@ public class myGameView extends JFrame implements LockBoard {
         char ch;
         for (int i = 0; i < myMaps.curMap.Rows; i++) {
             for (int j = 0; j < myMaps.curMap.Cols; j++) {
-                ch = m_cArray[i][j];  // 正推迷宫
+                ch = state.m_cArray[i][j];  // 正推迷宫
                 if (myMaps.m_Sets[13] == 1) {  // “互动双推”模式
-                    if (bk_cArray[i][j] == '$' || bk_cArray[i][j] == '*') {  // 只有逆推地图中的箱子将成为正推的目标点位
+                    if (state.bk_cArray[i][j] == '$' || state.bk_cArray[i][j] == '*') {  // 只有逆推地图中的箱子将成为正推的目标点位
                         switch (ch) {
                             case '-': ch = '.'; break;
                             case '$': ch = '*'; break;
@@ -3780,14 +2696,14 @@ public class myGameView extends JFrame implements LockBoard {
             for (int i = 0; i < myMaps.curMap.Rows; i++) {
                 for (int j = 0; j < myMaps.curMap.Cols; j++) {
                     switch (myMaps.m_nTrun) {
-                        case 0: ch = m_cArray[i][j];
-                                ch2 = bk_cArray[i][j]; break;
-                        case 2: ch = m_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j];
-                                ch2 = bk_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j]; break;
-                        case 4: ch = m_cArray[i][myMaps.curMap.Cols - 1 - j];
-                                ch2 = bk_cArray[i][myMaps.curMap.Cols - 1 - j]; break;
-                        case 6: ch = m_cArray[myMaps.curMap.Rows - 1 - i][j];
-                                ch2 = bk_cArray[myMaps.curMap.Rows - 1 - i][j]; break;
+                        case 0: ch = state.m_cArray[i][j];
+                                ch2 = state.bk_cArray[i][j]; break;
+                        case 2: ch = state.m_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j];
+                                ch2 = state.bk_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j]; break;
+                        case 4: ch = state.m_cArray[i][myMaps.curMap.Cols - 1 - j];
+                                ch2 = state.bk_cArray[i][myMaps.curMap.Cols - 1 - j]; break;
+                        case 6: ch = state.m_cArray[myMaps.curMap.Rows - 1 - i][j];
+                                ch2 = state.bk_cArray[myMaps.curMap.Rows - 1 - i][j]; break;
                         default: ch = '_'; ch2 = '_'; break;
                     }
                     s_XSB8.append(dualPush(ch, ch2));
@@ -3798,14 +2714,14 @@ public class myGameView extends JFrame implements LockBoard {
             for (int j = 0; j < myMaps.curMap.Cols; j++) {
                 for (int i = 0; i < myMaps.curMap.Rows; i++) {
                     switch (myMaps.m_nTrun) {
-                        case 1: ch = m_cArray[myMaps.curMap.Rows - 1 - i][j];
-                                ch2 = bk_cArray[myMaps.curMap.Rows - 1 - i][j]; break;
-                        case 3: ch = m_cArray[i][myMaps.curMap.Cols - 1 - j];
-                                ch2 = bk_cArray[i][myMaps.curMap.Cols - 1 - j]; break;
-                        case 5: ch = m_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j];
-                                ch2 = bk_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j]; break;
-                        case 7: ch = m_cArray[i][j];
-                                ch2 = bk_cArray[i][j]; break;
+                        case 1: ch = state.m_cArray[myMaps.curMap.Rows - 1 - i][j];
+                                ch2 = state.bk_cArray[myMaps.curMap.Rows - 1 - i][j]; break;
+                        case 3: ch = state.m_cArray[i][myMaps.curMap.Cols - 1 - j];
+                                ch2 = state.bk_cArray[i][myMaps.curMap.Cols - 1 - j]; break;
+                        case 5: ch = state.m_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j];
+                                ch2 = state.bk_cArray[myMaps.curMap.Rows - 1 - i][myMaps.curMap.Cols - 1 - j]; break;
+                        case 7: ch = state.m_cArray[i][j];
+                                ch2 = state.bk_cArray[i][j]; break;
                         default: ch = '_'; ch2 = '_'; break;
                     }
                     s_XSB8.append(dualPush(ch, ch2));
@@ -3819,18 +2735,18 @@ public class myGameView extends JFrame implements LockBoard {
         Iterator<Byte> myItr;
 
         // 解关答案
-        if (!m_lstMovUnDo.isEmpty()) {
-            myItr = m_lstMovUnDo.iterator();
+        if (!state.m_lstMovUnDo.isEmpty()) {
+            myItr = state.m_lstMovUnDo.iterator();
             while (myItr.hasNext()) {
                 t = myItr.next();
                 s_Lurd.append(Move[t - 1]);
             }
         }
         if (!isANS) {  // 若正推已经是答案，则不再导出逆推动作
-            if (!m_lstMovUnDo2.isEmpty()) {
+            if (!state.m_lstMovUnDo2.isEmpty()) {
                 if (s_Lurd.length() > 0) s_Lurd.append('\n');
-                s_Lurd.append('[').append(m_nCol0 + 1).append(',').append(m_nRow0 + 1).append(']');  // （x, y）-- 先列后行
-                myItr = m_lstMovUnDo2.iterator();
+                s_Lurd.append('[').append(state.m_nCol0 + 1).append(',').append(state.m_nRow0 + 1).append(']');  // （x, y）-- 先列后行
+                myItr = state.m_lstMovUnDo2.iterator();
                 while (myItr.hasNext()) {
                     t = myItr.next();
                     s_Lurd.append(Move[t - 1]);
@@ -3839,13 +2755,13 @@ public class myGameView extends JFrame implements LockBoard {
         }
 
         boolean[] my_Rule = new boolean[myMaps.curMap.Cols * myMaps.curMap.Rows];
-        short[] my_BoxNum = new short[m_nGoals];  // 按箱子数定义，记录“自动箱子编号”，以方便转换“人工箱子编号”
+        short[] my_BoxNum = new short[state.m_nGoals];  // 按箱子数定义，记录“自动箱子编号”，以方便转换“人工箱子编号”
         for (int i = 0; i < myMaps.curMap.Rows; i++) {
             for (int j = 0; j < myMaps.curMap.Cols; j++) {
-                my_Rule[myMaps.curMap.Cols * i + j] = mark44[i][j];
-                if (m_iBoxNum2[i][j] > 0 && (m_cArray[i][j] == '$' || m_cArray[i][j] == '*')) {
+                my_Rule[myMaps.curMap.Cols * i + j] = state.mark44[i][j];
+                if (state.m_iBoxNum2[i][j] > 0 && (state.m_cArray[i][j] == '$' || state.m_cArray[i][j] == '*')) {
                     // 自动箱子编号与人工箱子编号建立关联
-                    my_BoxNum[m_iBoxNum2[i][j] - 1] = myMaps.m_bBianhao ? m_iBoxNum2[i][j] : m_iBoxNum[i][j];
+                    my_BoxNum[state.m_iBoxNum2[i][j] - 1] = myMaps.m_bBianhao ? state.m_iBoxNum2[i][j] : state.m_iBoxNum[i][j];
                 }
             }
         }
@@ -3855,7 +2771,7 @@ public class myGameView extends JFrame implements LockBoard {
         d.local = s_XSB1.toString();
         d.local8 = s_XSB8.toString();
         d.isAns = isANS;
-        d.gifStart = m_Gif_Start;
+        d.gifStart = state.m_Gif_Start;
         d.rule = my_Rule;
         d.boxNum = my_BoxNum;
         d.importYass = m_imPort_YASS;
@@ -4169,24 +3085,24 @@ public class myGameView extends JFrame implements LockBoard {
     public void boxNoMoved() {
         if (bt_BK.isChecked()) return;
 
-        int row = m_nRow3;
-        int col = m_nCol3;
+        int row = state.m_nRow3;
+        int col = state.m_nCol3;
         mMap.m_boxNoMoved = true;
         mMap.m_boxNoUsed = true;
         int dir = 0;
 
         for (int i = 0; i < myMaps.curMap.Rows; i++) {
             for (int j = 0; j < myMaps.curMap.Cols; j++) {
-                if (mark7[i][j]) mark11[i][j] = false;
-                else mark11[i][j] = true;
-                if (mark8[i][j]) mark12[i][j] = false;
-                else mark12[i][j] = true;
+                if (state.mark7[i][j]) state.mark11[i][j] = false;
+                else state.mark11[i][j] = true;
+                if (state.mark8[i][j]) state.mark12[i][j] = false;
+                else state.mark12[i][j] = true;
             }
         }
 
         byte mDir;
         int t = -1;
-        Iterator<Byte> myItr = m_lstMovUnDo.iterator();
+        Iterator<Byte> myItr = state.m_lstMovUnDo.iterator();
         while (myItr.hasNext()) {
             mDir = myItr.next();
             switch (mDir) {
@@ -4212,11 +3128,11 @@ public class myGameView extends JFrame implements LockBoard {
                     break;
             }
 
-            if (mDir > 4 && t >= 0 && !mark11[row - dr4[t] * dir][col - dc4[t] * dir]) {
-                mark11[row - dr4[t] * dir][col - dc4[t] * dir] = true;
-                mark12[row - dr4[t] * dir][col - dc4[t] * dir] = true;
+            if (mDir > 4 && t >= 0 && !state.mark11[row - dr4[t] * dir][col - dc4[t] * dir]) {
+                state.mark11[row - dr4[t] * dir][col - dc4[t] * dir] = true;
+                state.mark12[row - dr4[t] * dir][col - dc4[t] * dir] = true;
             }
-            mark12[row][col] = true;
+            state.mark12[row][col] = true;
         }
     }
 
@@ -4226,19 +3142,19 @@ public class myGameView extends JFrame implements LockBoard {
         int nRow, nCol;
 
         if (bt_BK.isChecked()) {
-            level = bk_cArray;
-            mark = mPathfinder.mark4;
-            mark9 = mark12;
+            level = state.bk_cArray;
+            mark = state.mPathfinder.mark4;
+            mark9 = state.mark12;
             mMap.m_boxCanCome2 = true;
-            nRow = m_nRow2;
-            nCol = m_nCol2;
+            nRow = state.m_nRow2;
+            nCol = state.m_nCol2;
         } else {
-            level = m_cArray;
-            mark = mPathfinder.mark3;
-            mark9 = mark11;
+            level = state.m_cArray;
+            mark = state.mPathfinder.mark3;
+            mark9 = state.mark11;
             mMap.m_boxCanCome = true;
-            nRow = m_nRow;
-            nCol = m_nCol;
+            nRow = state.m_nRow;
+            nCol = state.m_nCol;
         }
 
         for (int i = 0; i < myMaps.curMap.Rows; i++) {
@@ -4250,8 +3166,8 @@ public class myGameView extends JFrame implements LockBoard {
         for (int i = 0; i < myMaps.curMap.Rows; i++) {
             for (int j = 0; j < myMaps.curMap.Cols; j++) {
                 if (level[i][j] == '$' || level[i][j] == '*') {
-                    mPathfinder.FindBlock(bt_BK.isChecked(), level, i, j);
-                    mPathfinder.boxReachable(bt_BK.isChecked(), i, j, nRow, nCol);
+                    state.mPathfinder.FindBlock(bt_BK.isChecked(), level, i, j);
+                    state.mPathfinder.boxReachable(bt_BK.isChecked(), i, j, nRow, nCol);
                     mark9[i][j] = mark[row][col];
                 }
             }
@@ -4265,14 +3181,14 @@ public class myGameView extends JFrame implements LockBoard {
         boolean flg = bt_BK.isChecked();
 
         if (flg) {
-            level = bk_cArray;
-            mark = mPathfinder.mark2;
-            mark9 = mark12;
+            level = state.bk_cArray;
+            mark = state.mPathfinder.mark2;
+            mark9 = state.mark12;
             mMap.m_boxCanMove2 = true;
         } else {
-            level = m_cArray;
-            mark = mPathfinder.mark1;
-            mark9 = mark11;
+            level = state.m_cArray;
+            mark = state.mPathfinder.mark1;
+            mark9 = state.mark11;
             mMap.m_boxCanMove = true;
         }
 
@@ -4310,11 +3226,11 @@ public class myGameView extends JFrame implements LockBoard {
         LinkedList<Byte> pathByteList;
 
         if (flg) {
-            path = mPathfinder.manTo(true, bk_cArray, m_nRow2, m_nCol2, k, l);
-            pathByteList = m_lstMovReDo2;
+            path = state.mPathfinder.manTo(true, state.bk_cArray, state.m_nRow2, state.m_nCol2, k, l);
+            pathByteList = state.m_lstMovReDo2;
         } else {
-            path = mPathfinder.manTo(false, m_cArray, m_nRow, m_nCol, k, l);
-            pathByteList = m_lstMovReDo;
+            path = state.mPathfinder.manTo(false, state.m_cArray, state.m_nRow, state.m_nCol, k, l);
+            pathByteList = state.m_lstMovReDo;
         }
 
         if (!path.isEmpty()) {
@@ -4329,7 +3245,7 @@ public class myGameView extends JFrame implements LockBoard {
     public void formatPath(String strPath, boolean flg) {
         int Len = strPath.length();
         if (Len > 0) {
-            LinkedList<Byte> pathByteList = flg ? m_lstMovReDo2 : m_lstMovReDo;
+            LinkedList<Byte> pathByteList = flg ? state.m_lstMovReDo2 : state.m_lstMovReDo;
             pathByteList.clear();
             for (int t = 0; t < Len; t++) {
                 switch (strPath.charAt(t)) {
@@ -4490,28 +3406,28 @@ public class myGameView extends JFrame implements LockBoard {
                             myMaps.m_ActionIsPos = true;
                         }
                         if (myMaps.m_ActionIsPos) {
-                            m_lstMovedHistory.clear();
-                            Iterator<Byte> myItr = m_lstMovUnDo.descendingIterator();
+                            state.m_lstMovedHistory.clear();
+                            Iterator<Byte> myItr = state.m_lstMovUnDo.descendingIterator();
                             while (myItr.hasNext()) {
-                                m_lstMovedHistory.offer(myItr.next());
+                                state.m_lstMovedHistory.offer(myItr.next());
                             }
                         }
                         if (!myMaps.m_ActionIsPos) {
                             levelReset(false);
                         }
 
-                        m_nMacro_Row = m_nRow;
-                        m_nMacro_Col = m_nCol;
+                        m_nMacro_Row = state.m_nRow;
+                        m_nMacro_Col = state.m_nCol;
                         mMap.myMacro.clear();
                         mMap.myMacro.add(0);
                         myMaps.isMacroDebug = false;
                         StopMicro();
                         mMicroTask = new RunMicroTask(this);
                         mMicroTask.execute(0, myMaps.sAction.length - 1);
-                        m_bBusing = false;
+                        state.m_bBusing = false;
                         mMap.invalidate();
-                        if (!m_lstMovReDo.isEmpty()) {
-                            m_lstMovReDo.clear();
+                        if (!state.m_lstMovReDo.isEmpty()) {
+                            state.m_lstMovReDo.clear();
                         }
                     }
                 }).setVisible(true);
@@ -4552,14 +3468,14 @@ public class myGameView extends JFrame implements LockBoard {
             formatPath(myACT, bt_BK.isChecked());
         }
         int len;
-        m_bACT_ERROR = false;
+        state.m_bACT_ERROR = false;
         if (bt_BK.isChecked()) {
-            len = m_lstMovReDo2.size();
+            len = state.m_lstMovReDo2.size();
             if (len > 0) {
                 for (int k = 0; k < len; k++) reDo2();
             }
         } else {
-            len = m_lstMovReDo.size();
+            len = state.m_lstMovReDo.size();
             if (len > 0) {
                 for (int k = 0; k < len; k++) reDo1();
             }
@@ -4615,8 +3531,8 @@ public class myGameView extends JFrame implements LockBoard {
             int r2, c2;
             switch (cs) {
                 case 1:
-                    r2 = m_nRow + m;
-                    c2 = m_nCol + n;
+                    r2 = state.m_nRow + m;
+                    c2 = state.m_nCol + n;
                     break;
                 case 2:
                     r2 = m_nMacro_Row + m;
@@ -4635,14 +3551,14 @@ public class myGameView extends JFrame implements LockBoard {
                     mMap.myMacroInf = "  >>>  [ " + mMap.mGetCur(r2, c2) + " ]";
                     if (bMoves) {
                         if (FindPath(m_nMacro_Row, m_nMacro_Col, false)) {
-                            int len = m_lstMovReDo.size();
+                            int len = state.m_lstMovReDo.size();
                             for (int k = 0; k < len; k++) {
                                 reDo1();
                             }
                         }
                     }
                 } else {
-                    chr = m_cArray[r2][c2];
+                    chr = state.m_cArray[r2][c2];
                     mMap.myMacroInf = "  >>>  [ " + mMap.mGetCur(r2, c2) + " ] = " + chr;
                 }
             }
@@ -4746,7 +3662,7 @@ public class myGameView extends JFrame implements LockBoard {
             }
 
             ch = myMaps.sAction[step].charAt(0);
-            m_bBusing = false;
+            state.m_bBusing = false;
             if (ch == '*') {
                 step = myDo_Loop(step);
             } else {
@@ -4778,8 +3694,8 @@ public class myGameView extends JFrame implements LockBoard {
         char ch;
 
         ch = myACT.charAt(0);
-        m_bACT_IgnoreCase = false;
-        m_bACT_ERROR = false;
+        state.m_bACT_IgnoreCase = false;
+        state.m_bACT_ERROR = false;
         if (ch == '{') {
             try {
                 if (myACT.indexOf('=') >= 0) {
@@ -4793,7 +3709,7 @@ public class myGameView extends JFrame implements LockBoard {
                         }
                     }
                 } else {
-                    m_bACT_IgnoreCase = (myACT.indexOf('~') >= 0);
+                    state.m_bACT_IgnoreCase = (myACT.indexOf('~') >= 0);
                     myArr = myACT.replaceAll("~", " ").split("\\{|\\}");
                     if (myArr.length > 1) {
                         str = myArr[1].trim();
@@ -4812,7 +3728,7 @@ public class myGameView extends JFrame implements LockBoard {
                         if (n > 1) {
                             for (int k = 0; k < n; k++) {
                                 doACT(str);
-                                if (m_bACT_ERROR) break;
+                                if (state.m_bACT_ERROR) break;
                             }
                         } else {
                             doACT(str);
@@ -4897,10 +3813,10 @@ public class myGameView extends JFrame implements LockBoard {
             mViewReference = new WeakReference<myGameView>(mView);
 
             // 原版 onPreExecute()：清掉上一轮的逆推死锁数据、复位「无解」标志，并把「更多」染红
-            mView.mark14 = null;
-            mView.mark15 = null;
-            mView.mark16 = null;
-            mView.mArray9 = null;
+            mView.state.mark14 = null;
+            mView.state.mark15 = null;
+            mView.state.mark16 = null;
+            mView.state.mArray9 = null;
             m_bNoSolution = false;
             mView.bt_More.setTextColor(0xffcc0000);
 
@@ -4918,7 +3834,7 @@ public class myGameView extends JFrame implements LockBoard {
          * 是空操作（返回 false，{@code isCancelled()} 保持 false）。而「通关后跳下一关」正好发生在
          * 上一关算完的瞬间：{@code initMap()} 的取消拦不住 {@code done()} 排队执行，
          * 于是旧关卡的「这是一个无解的关卡！」会弹在新关卡上，旧关卡的
-         * {@code mark14/15/16}、{@code mArray9} 也会覆盖掉新关卡的死锁数据。
+         * {@code state.mark14/15/16}、{@code state.mArray9} 也会覆盖掉新关卡的死锁数据。
          * 所以 {@code process()} / {@code done()} 都必须先过这一关。
          */
         boolean isCurrent() {
@@ -4933,8 +3849,8 @@ public class myGameView extends JFrame implements LockBoard {
             if (m_Rows <= 0 || m_Cols <= 0) return null;  // 尺寸取自构造器；为 0 说明当时没有关卡
 
             try {
-                int mRow = view.m_nRow;
-                int mCol = view.m_nCol;
+                int mRow = view.state.m_nRow;
+                int mCol = view.state.m_nCol;
 
                 if (isCancelled()) return null;
 
@@ -4951,7 +3867,7 @@ public class myGameView extends JFrame implements LockBoard {
                 for (int i = 0; i < m_Rows; i++) {
                     for (int j = 0; j < m_Cols; j++) {
                         if (isCancelled()) return null;
-                        mArray0[i][j] = view.m_cArray0[i][j];
+                        mArray0[i][j] = view.state.m_cArray0[i][j];
                         if (mArray0[i][j] == '#' || mArray0[i][j] == '_') mArray[i][j] = '#';
                         else mArray[i][j] = '-';
                     }
@@ -5004,22 +3920,22 @@ public class myGameView extends JFrame implements LockBoard {
                 // 而不是等整个任务算完。原先挂在 done() 里，等于推迟了一整轮，
                 // 正好落在「通关→跳下一关」之后，就弹在新关卡上了。
                 publish();
-                view.mark15 = mk15;
-                view.mark16 = mk16;
+                view.state.mark15 = mk15;
+                view.state.mark16 = mk16;
 
-                view.mPF = new MyPathfinder(m_Rows, m_Cols, () -> myMaps.m_Sets[17] == 1);
-                view.mPF.FindBlock(false, mArray, mRow, mCol);
+                view.state.mPF = new MyPathfinder(m_Rows, m_Cols, () -> myMaps.m_Sets[17] == 1);
+                view.state.mPF.FindBlock(false, mArray, mRow, mCol);
                 for (int i = 0; i < m_Rows; i++) {
                     for (int j = 0; j < m_Cols; j++) {
                         if (isCancelled()) return null;
                         if (mArray0[i][j] == '$' || mArray0[i][j] == '*') {
                             mArray[i][j] = '$';
-                            view.mPF.boxReachable(false, i, j, mRow, mCol);
+                            view.state.mPF.boxReachable(false, i, j, mRow, mCol);
 
                             for (r = 0; r < m_Rows; r++) {
                                 for (c = 0; c < m_Cols; c++) {
                                     if (isCancelled()) return null;
-                                    if (view.mPF.mark3[r][c]) mk14[r][c]++;
+                                    if (view.state.mPF.mark3[r][c]) mk14[r][c]++;
                                 }
                             }
                             mArray[i][j] = '-';
@@ -5066,14 +3982,14 @@ public class myGameView extends JFrame implements LockBoard {
             if (view == null) return;
 
             // 已被 initMap() 换成新任务（或 myStop() 置空）：本任务的结果属于上一关，一律丢弃 ——
-            // 既不写 mark14/15/16、mArray9（否则新关卡会拿到旧关卡的死锁数据而误报），也不弹提醒。
+            // 既不写 state.mark14/15/16、state.mArray9（否则新关卡会拿到旧关卡的死锁数据而误报），也不弹提醒。
             if (!isCurrent()) return;
             if (isCancelled()) return;
 
             try {
                 short[][] mk = get();
-                view.mark14 = mk;
-                view.mArray9 = mArray;
+                view.state.mark14 = mk;
+                view.state.mArray9 = mArray;
             } catch (Throwable ignored) { }
 
             view.bt_More.setTextColor(0xffffffff);
@@ -5259,7 +4175,7 @@ public class myGameView extends JFrame implements LockBoard {
                     }
 
                     ch = myMaps.sAction[step].charAt(0);
-                    view.m_bBusing = false;
+                    view.state.m_bBusing = false;
                     if (ch == '*') {
                         step = view.myDo_Loop(step);
                     } else {
@@ -5321,11 +4237,11 @@ public class myGameView extends JFrame implements LockBoard {
             myGameView view = mViewReference2.get();
             if (view != null) {
                 view.mMap.invalidate();
-                view.m_bBusing = false;
+                view.state.m_bBusing = false;
                 myMaps.m_ActionIsRedy = false;
                 MyToast.showToast(view, msg[type] + "耗时 " + ((myTime - myTime0) / 1000) + " 秒", MyToast.LENGTH_SHORT);
-                if (!view.m_lstMovReDo.isEmpty()) {
-                    view.m_lstMovReDo.clear();
+                if (!view.state.m_lstMovReDo.isEmpty()) {
+                    view.state.m_lstMovReDo.clear();
                 }
                 view.StopMicro();
             }

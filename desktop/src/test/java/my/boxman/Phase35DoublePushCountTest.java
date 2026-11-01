@@ -128,9 +128,9 @@ public class Phase35DoublePushCountTest {
         fw[1][3] = '.';   // 正推：一个目标
         bk[1][2] = '$';   // 逆推：箱子（与正推箱子同位）
         bk[1][3] = '$';   // 逆推：箱子
-        g.m_cArray = fw;
-        g.bk_cArray = bk;
-        g.bk_selArray = new byte[rows][cols];
+        g.state.m_cArray = fw;
+        g.state.bk_cArray = bk;
+        g.state.bk_selArray = new byte[rows][cols];
 
         map.m_nRows = rows;
         map.m_nCols = cols;
@@ -140,7 +140,7 @@ public class Phase35DoublePushCountTest {
         map.m_lGoto = false;
         map.m_lGoto2 = false;
         map.m_lParityBrightnessShade = false;
-        g.m_bBusing = false;
+        g.state.m_bBusing = false;
 
         // selNode 的 r2 < 0 表示「还没定第一个角」，doACT 里那次 setPT 会把
         // [r1..r][c1..c] 整块置 1 —— 锚点放 (0,0)、点在右下角就是全盘选中

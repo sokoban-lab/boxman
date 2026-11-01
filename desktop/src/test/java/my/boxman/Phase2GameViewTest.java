@@ -50,10 +50,10 @@ public class Phase2GameViewTest {
         Assert.assertNotNull(game.bt_More);
 
         // 验证初始状态
-        Assert.assertTrue("Row should be positive", game.m_nRow >= 0);
-        Assert.assertTrue("Col should be positive", game.m_nCol >= 0);
-        Assert.assertTrue("Goals should be > 0", game.m_nGoals > 0);
-        Assert.assertNotNull("m_cArray should be initialized", game.m_cArray);
+        Assert.assertTrue("Row should be positive", game.state.m_nRow >= 0);
+        Assert.assertTrue("Col should be positive", game.state.m_nCol >= 0);
+        Assert.assertTrue("Goals should be > 0", game.state.m_nGoals > 0);
+        Assert.assertNotNull("m_cArray should be initialized", game.state.m_cArray);
 
         // 模拟寻径与推箱操作验证
         // 查找人旁边可达的地板格子测试寻径
@@ -61,10 +61,10 @@ public class Phase2GameViewTest {
         int[] dc = {0, 0, -1, 1};
         boolean pathFound = false;
         for (int k = 0; k < 4; k++) {
-            int nr = game.m_nRow + dr[k];
-            int nc = game.m_nCol + dc[k];
+            int nr = game.state.m_nRow + dr[k];
+            int nc = game.state.m_nCol + dc[k];
             if (nr >= 0 && nr < myMaps.curMap.Rows && nc >= 0 && nc < myMaps.curMap.Cols) {
-                if (game.m_cArray[nr][nc] == '-' || game.m_cArray[nr][nc] == '.') {
+                if (game.state.m_cArray[nr][nc] == '-' || game.state.m_cArray[nr][nc] == '.') {
                     pathFound = game.FindPath(nr, nc, false);
                     if (pathFound) {
                         break;
@@ -73,7 +73,7 @@ public class Phase2GameViewTest {
             }
         }
         Assert.assertTrue("Should find path to at least one neighbor floor", pathFound);
-        Assert.assertFalse("m_lstMovReDo should not be empty after finding path", game.m_lstMovReDo.isEmpty());
+        Assert.assertFalse("m_lstMovReDo should not be empty after finding path", game.state.m_lstMovReDo.isEmpty());
 
         // 测试底栏 7 按钮方法调用与切换
         game.bt_IM.setChecked(true);

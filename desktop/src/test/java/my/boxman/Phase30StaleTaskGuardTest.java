@@ -187,13 +187,13 @@ public class Phase30StaleTaskGuardTest {
         // 新任务算出来的结果（这里用替身代表）
         short[][] fresh14 = new short[1][1];
         char[][] fresh9 = new char[1][1];
-        win.mark14 = fresh14;
-        win.mArray9 = fresh9;
+        win.state.mark14 = fresh14;
+        win.state.mArray9 = fresh9;
 
         old.done();   // 旧任务的 done() 这时才被 EDT 排到
 
-        assertSame("旧任务不得覆盖新关卡的 mark14", fresh14, win.mark14);
-        assertSame("旧任务不得覆盖新关卡的 mArray9", fresh9, win.mArray9);
+        assertSame("旧任务不得覆盖新关卡的 mark14", fresh14, win.state.mark14);
+        assertSame("旧任务不得覆盖新关卡的 mArray9", fresh9, win.state.mArray9);
     }
 
     /** 当前任务正常算完后，结果照常写回 —— 闸门不能把正常路径也挡掉。 */
@@ -207,8 +207,8 @@ public class Phase30StaleTaskGuardTest {
         assertNotNull("正常关卡应当算出逆推区域数据", expected14);
 
         // ⚠️ done() 是 worker 线程排到 EDT 上的，可能晚于 get() 返回，所以要等它落定。
-        assertTrue("当前任务的结果应当写回 mark14", awaitUntil(() -> win.mark14 == expected14, 2000));
-        assertSame("当前任务的地图应当写回 mArray9", task.mArray, win.mArray9);
+        assertTrue("当前任务的结果应当写回 mark14", awaitUntil(() -> win.state.mark14 == expected14, 2000));
+        assertSame("当前任务的地图应当写回 mArray9", task.mArray, win.state.mArray9);
     }
 
     // ---------------------------------------------------------------- 尺寸捕获时机
@@ -230,17 +230,17 @@ public class Phase30StaleTaskGuardTest {
     /** 构造任务时会清掉上一轮的死锁数据、复位「无解」标志（原版 {@code onPreExecute()}）。 */
     @Test
     public void testConstructionResetsPreviousRoundData() {
-        win.mark14 = new short[1][1];
-        win.mark15 = new boolean[1][1];
-        win.mark16 = new boolean[1][1];
-        win.mArray9 = new char[1][1];
+        win.state.mark14 = new short[1][1];
+        win.state.mark15 = new boolean[1][1];
+        win.state.mark16 = new boolean[1][1];
+        win.state.mArray9 = new char[1][1];
 
         myGameView.AsyncCountBoxsTask task = new myGameView.AsyncCountBoxsTask(win);
 
-        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mark14", win.mark14);
-        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mark15", win.mark15);
-        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mark16", win.mark16);
-        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mArray9", win.mArray9);
+        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mark14", win.state.mark14);
+        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mark15", win.state.mark15);
+        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mark16", win.state.mark16);
+        org.junit.Assert.assertNull("构造新任务时应清掉上一轮的 mArray9", win.state.mArray9);
         assertFalse("新任务的「无解」标志应当是 false", task.m_bNoSolution);
     }
 
@@ -264,17 +264,17 @@ public class Phase30StaleTaskGuardTest {
             win.bt_IM.setChecked(false);    // 走「逐拍动画」支路，而不是瞬移支路
 
             win.myStop();                   // myTimer1..4 一起置空 —— 关窗口时就是这个状态
-            win.m_nStep = 3;
-            for (int i = 0; i < 5; i++) win.m_lstMovReDo.offer((byte) 3);
+            win.state.m_nStep = 3;
+            for (int i = 0; i < 5; i++) win.state.m_lstMovReDo.offer((byte) 3);
 
             win.UpData1(1);                 // 这一拍在停表之前就排好了
 
             assertEquals("这一拍应把待执行步数走完，然后因 timer 为 null 而停表",
-                    0, win.m_nStep);
+                    0, win.state.m_nStep);
         } finally {
             myMaps.m_Sets[10] = savedSpeed;
             myMaps.m_Sets[6] = savedInstant;
-            win.m_lstMovReDo.clear();
+            win.state.m_lstMovReDo.clear();
         }
     }
 

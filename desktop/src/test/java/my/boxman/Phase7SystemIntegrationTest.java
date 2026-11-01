@@ -58,17 +58,17 @@ public class Phase7SystemIntegrationTest {
         assertNotNull("myGameView should initialize", game);
 
         // 4. Verify initial state
-        assertNotNull("cArray should be populated", game.m_cArray);
-        assertEquals("Target count should be 1", 1, game.m_nGoals);
-        assertEquals("Initially 0 goals completed", 0, game.m_nGoals_OK);
+        assertNotNull("cArray should be populated", game.state.m_cArray);
+        assertEquals("Target count should be 1", 1, game.state.m_nGoals);
+        assertEquals("Initially 0 goals completed", 0, game.state.m_nGoals_OK);
 
         // 5. Simulate pushing the box right (player at col 1 pushes box at col 2 into goal at col 3)
         // Simulate step: player moves right, pushes box
-        game.m_cArray[1][1] = '-';
-        game.m_cArray[1][2] = '@';
-        game.m_cArray[1][3] = '*'; // Box on goal
-        game.m_nGoals_OK = 1;
-        game.m_iStep[0] = 1;
+        game.state.m_cArray[1][1] = '-';
+        game.state.m_cArray[1][2] = '@';
+        game.state.m_cArray[1][3] = '*'; // Box on goal
+        game.state.m_nGoals_OK = 1;
+        game.state.m_iStep[0] = 1;
 
         // 6. Check clearance
         assertTrue("Level should be solved when all boxes on goals", game.myClearance());
