@@ -1,18 +1,16 @@
 package my.boxman.jsoko;
 
-import my.boxman.myGameView;
-
 // 这个类，用于检查“冻结”死锁
 public final class FreezeLock {
 
-	private myGameView board;
+	private final LockBoard board;
 	private char[][] level;                                // 地图指针
 	private int nWidth, nHeight;                           // 地图的宽、高
 	private boolean isBoxOnNotGoal;                        // 是否遇到了不在目标位的箱子
 	private int[] pt;
 	IntStack intStack;
 
-	public FreezeLock(myGameView board) {
+	public FreezeLock(LockBoard board) {
 		this.board = board;
 		// 使用最大尺寸定义内存，减少死锁检查时，频繁的内存申请及释放（因为死锁检查太过频繁）
 		pt       = new int[8];                     // “小四块”需要入列待检的箱子，最多 5 个
@@ -21,7 +19,7 @@ public final class FreezeLock {
 
 	public boolean isDeadlock(int boxRow, int boxCol) {
 
-		level   = board.m_cArray;
+		level   = board.cells();
 		nHeight = level.length;
 		nWidth  = level[0].length;
 
@@ -34,18 +32,18 @@ public final class FreezeLock {
 		for (int i = 0; i < nHeight; i++) {
 			for (int j = 0; j < nWidth; j++) {
 				if (isBoxOrWall(i, j) && isBoxOrWall(i, j-1) && isBoxOrWall(i-1, j) && isBoxOrWall(i-1, j-1)) {
-					if (isBox2(i, j)) board.m_Freeze[i][j] = 4;
-					if (isBox2(i, j-1)) board.m_Freeze[i][j-1] = 4;
-					if (isBox2(i-1, j)) board.m_Freeze[i-1][j] = 4;
-					if (isBox2(i-1, j-1)) board.m_Freeze[i-1][j-1] = 4;
+					if (isBox2(i, j)) board.freezeMarks()[i][j] = 4;
+					if (isBox2(i, j-1)) board.freezeMarks()[i][j-1] = 4;
+					if (isBox2(i-1, j)) board.freezeMarks()[i-1][j] = 4;
+					if (isBox2(i-1, j-1)) board.freezeMarks()[i-1][j-1] = 4;
 				}
-				else board.m_Freeze[i][j] = 0;
+				else board.freezeMarks()[i][j] = 0;
 			}
 		}
 
 		// 第三步，若当前箱子处于“四块”冻结，一定没有引发“四块”死锁
 		// 那么，收集挨着此“四块”的箱子，并检查它们是否引发了“Z型”死锁
-		if (board.m_Freeze[boxRow][boxCol] == 4) {
+		if (board.freezeMarks()[boxRow][boxCol] == 4) {
 			intStack.clear();
 			findAroundBoxs(intStack, boxRow, boxCol);  // 收集“四块”周围的箱子
 
@@ -96,34 +94,34 @@ public final class FreezeLock {
 		//排查可达点的四邻（用循环取代递归）
 		int i1, j1, i0, j0;
 		int p = 0, tail = 0;
-		board.m_Freeze[boxRow][boxCol] += 10;
+		board.freezeMarks()[boxRow][boxCol] += 10;
 		pt[0] = boxRow << 16 | boxCol;
 		while (p <= tail) {
 			while (p <= tail) {
 				i0 = pt[p] >>> 16;
 				j0 = pt[p] & 0x0000ffff;
-				// 此时，board.m_Freeze[i0][j0] == 14，检查其邻居
+				// 此时，board.freezeMarks()[i0][j0] == 14，检查其邻居
 				for (int k = 0; 4 > k; k++) {
 					i1 = i0 + dr4[k];
 					j1 = j0 + dc4[k];
 					if (i1 < 0 || j1 < 0 || i1 >= nHeight || j1 >= nWidth || isDistanceOut(boxRow, boxCol, i1, j1, 2)) {  // 超出关联“范围”
 						continue;
 					} else if (isBox2(i1, j1)) {  // 仅检查范围内有关的箱子
-//						System.out.println("==================== " + i1 + ", " + j1 + ": " + level[i1][j1] + " - " + board.m_Freeze[i1][j1]);
+//						System.out.println("==================== " + i1 + ", " + j1 + ": " + level[i1][j1] + " - " + board.freezeMarks()[i1][j1]);
 						if (isDistanceOut(boxRow, boxCol, i1, j1, 1)) {   // 当前“小四块”紧挨着的位置
-							if (board.m_Freeze[i1][j1] == 0) {  // 此箱子未在任何“四块”之内，需要检查其是否“Z型”冻结死锁
+							if (board.freezeMarks()[i1][j1] == 0) {  // 此箱子未在任何“四块”之内，需要检查其是否“Z型”冻结死锁
 								intStack.add(i1 << 16 | j1);
 //								System.out.println("==================== " + intStack.size());
 							}
 						} else {  // 这里是当前“小四块”内的箱子
-							if (board.m_Freeze[i1][j1] == 0) {  // 此箱子未构成“小四块”，也要检查其是否“Z型”冻结死锁
+							if (board.freezeMarks()[i1][j1] == 0) {  // 此箱子未构成“小四块”，也要检查其是否“Z型”冻结死锁
 								intStack.add(i1 << 16 | j1);
 //                              System.out.println("==================== " + intStack.size());
-							} else if (board.m_Freeze[i1][j1] == 4) {  // 当前“小四块”内构成“四块”的箱子，因为未曾入列检查过，所以，入列待检
-								if (i1 == boxRow || j1 == boxCol || isDistanceOut(board.m_nRow, board.m_nCol, i1, j1, 1)) {  // 挨着当前箱子的箱子或与人的距离大于 1 的箱子
+							} else if (board.freezeMarks()[i1][j1] == 4) {  // 当前“小四块”内构成“四块”的箱子，因为未曾入列检查过，所以，入列待检
+								if (i1 == boxRow || j1 == boxCol || isDistanceOut(board.playerRow(), board.playerCol(), i1, j1, 1)) {  // 挨着当前箱子的箱子或与人的距离大于 1 的箱子
 									tail++;
 									pt[tail] = i1 << 16 | j1;
-									board.m_Freeze[i1][j1] += 10;
+									board.freezeMarks()[i1][j1] += 10;
 //								    System.out.println("==================== " + tail);
 								}
 							}
@@ -219,7 +217,7 @@ public final class FreezeLock {
     // 是否墙壁、墙外或界外
 	private boolean isWall(int row, int col) {
 		if (row < 0 || col < 0 || row >= nHeight || col >= nWidth ||
-			board.m_Freeze[row][col] == 4 || board.m_Freeze[row][col] == 14 ||
+			board.freezeMarks()[row][col] == 4 || board.freezeMarks()[row][col] == 14 ||
             level[row][col] == '#' || level[row][col] == '_') {
 			return true;
 		}

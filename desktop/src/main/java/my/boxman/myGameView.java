@@ -4,6 +4,7 @@ import my.boxman.compat.ResourceLoader;
 import my.boxman.jsoko.DiagonalLock;
 import my.boxman.jsoko.FreezeLock;
 import my.boxman.jsoko.IntStack;
+import my.boxman.jsoko.LockBoard;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,7 +27,7 @@ import my.boxman.compat.HoloContent;
 import my.boxman.compat.HoloMessageDialog;
 import my.boxman.compat.HoloPopupMenu;
 
-public class myGameView extends JFrame {
+public class myGameView extends JFrame implements LockBoard {
 
     /**
      * 底栏按钮 = 原版 {@code res/values/style.xml} 的 {@code tab_style}。
@@ -93,7 +94,7 @@ public class myGameView extends JFrame {
     javax.swing.Timer myTimer4;
 
     public myGameViewMap mMap;  // 地图
-    public myPathfinder mPathfinder;  // 探路者
+    public MyPathfinder mPathfinder;  // 探路者
 
     // 底行按钮
     public GameButton bt_UnDo = null;
@@ -134,7 +135,7 @@ public class myGameView extends JFrame {
     public LinkedList<Byte> m_lstMovReDo2;  // 逆推 reDo 栈
 
     public char[][] mArray9;  // 检查死锁用的临时地图（空地图），正推根据目标数识别死锁时，也会用到
-    public myPathfinder mPF;  // 检查死锁用的探路者，正推根据目标数识别死锁时，也会用到
+    public MyPathfinder mPF;  // 检查死锁用的探路者，正推根据目标数识别死锁时，也会用到
     public boolean[][] mark15, mark16, mark7, mark8, mark11, mark12, mark44;  // 15、为逆推死点；16、为正推网锁点；7、为正推箱子初位；8、为正推初态地板；11、为哪个箱子能动或未动过；12、为正推未被使用过的地板；44、是否显示标尺
     public short[][] mark14;  // 14、为逆推可推的点（其它为推死的点）
     public byte[][] mark41;  // 网锁标志
@@ -169,6 +170,26 @@ public class myGameView extends JFrame {
     public DiagonalLock closedDiagonalLock;
     public FreezeLock freezeDeadlock;
     public byte[][] m_Freeze;  // 检查冻结时使用的临时数字
+
+    @Override
+    public char[][] cells() {
+        return m_cArray;
+    }
+
+    @Override
+    public byte[][] freezeMarks() {
+        return m_Freeze;
+    }
+
+    @Override
+    public int playerRow() {
+        return m_nRow;
+    }
+
+    @Override
+    public int playerCol() {
+        return m_nCol;
+    }
 
     public int m_nRow3;  // 逆推过关时用，记录仓管员正推地图之初始占位
     public int m_nCol3;
@@ -2077,7 +2098,7 @@ public class myGameView extends JFrame {
             mArray9 = null;
 
             mBoxNum(m_cArray, m_nRow, m_nCol);
-            mPathfinder = new myPathfinder(myMaps.curMap.Rows, myMaps.curMap.Cols);
+            mPathfinder = new MyPathfinder(myMaps.curMap.Rows, myMaps.curMap.Cols, () -> myMaps.m_Sets[17] == 1);
 
             m_iStep[0] = 0;
             m_iStep[1] = 0;
@@ -4986,7 +5007,7 @@ public class myGameView extends JFrame {
                 view.mark15 = mk15;
                 view.mark16 = mk16;
 
-                view.mPF = new myPathfinder(m_Rows, m_Cols);
+                view.mPF = new MyPathfinder(m_Rows, m_Cols, () -> myMaps.m_Sets[17] == 1);
                 view.mPF.FindBlock(false, mArray, mRow, mCol);
                 for (int i = 0; i < m_Rows; i++) {
                     for (int j = 0; j < m_Cols; j++) {

@@ -6,6 +6,14 @@ This is a port of [BoxMan](https://github.com/yuweng227/BoxMan_And)[^boxman] to 
 
 [^boxman]: Its original name in Chinese is 推箱快手.
 
+## Layout
+
+- `core/` — platform-independent game logic shared by both builds (solver, pathfinding, level parsing, deadlock checks).
+- `desktop/` — Swing client.
+- `android/` — Android client.
+
+Both clients pull `core` in as an included build, so a single `./gradlew` command builds everything they need.
+
 ## Requirements
 
 1. **Build requirement**: JDK 17 or newer. The bundled Gradle wrapper requires 17+.

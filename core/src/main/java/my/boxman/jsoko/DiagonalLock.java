@@ -1,7 +1,5 @@
 package my.boxman.jsoko;
 
-import my.boxman.myGameView;
-
 // 这个类，用于检查“闭锁对角”死锁（移植于 JSoko）
 public class DiagonalLock {
 
@@ -13,22 +11,22 @@ public class DiagonalLock {
 	final private int NONE = -1;
 	private int[] offset = { -100, 100, -1, 1 };      // 方便方向计算的数组，上、下、左、右
 
-	private myGameView board;
+	private final LockBoard board;
 	private char[][] level;                           // 地图指针
 	private int nWidth, nHeight;                      // 地图的宽、高
 	private int playerPosition;                       // 仓管员位置
 
-	public DiagonalLock(final myGameView board) {
+	public DiagonalLock(final LockBoard board) {
 		this.board = board;
 	}
 
 	public boolean isDeadlock(int boxPosition) {
-		level   = board.m_cArray;
+		level   = board.cells();
 		nHeight = level.length;
 		nWidth  = level[0].length;
 		offset[0] = -nWidth;
 		offset[1] = nWidth;
-		playerPosition = board.m_nRow * nWidth + board.m_nCol;  // 当仓管员位于对角线上时，不会死锁
+		playerPosition = board.playerRow() * nWidth + board.playerCol();  // 当仓管员位于对角线上时，不会死锁
 
 		return isDiagonalDeadlock(boxPosition + offset[LEFT],  boxPosition) ||  // 与左邻组合后的情况
 			   isDiagonalDeadlock(boxPosition + offset[RIGHT], boxPosition);    // 与右邻组合后的情况
@@ -243,7 +241,7 @@ public class DiagonalLock {
 		int row = pos / nWidth, col = pos % nWidth;
 
 		return row < 0 || col < 0 || row >= nHeight || col >= nWidth ||
-				board.m_Freeze[row][col] == 4 || board.m_Freeze[row][col] == 14 ||
+				board.freezeMarks()[row][col] == 4 || board.freezeMarks()[row][col] == 14 ||
 				level[row][col] == '#' || level[row][col] == '_';
 	}
 

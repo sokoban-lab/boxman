@@ -23,13 +23,14 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 //探路单元，提供各种寻径功能
-public class myPathfinder {
+public class MyPathfinder {
 
     //供外部使用的各标志数组：1、2为仓管员的可达点；3、4为箱子的可达点；5、6为穿越点
     public boolean[][] mark1, mark2, mark3, mark4, mark5, mark6, mark;  //mark 识别穿越可达用；
 
     char[][] tmpLevel, tmpLevel1, tmpLevel2;  //地图副本，割点和寻径使用时，会更改其数据
     int mMapRows, mMapCols;  //当前地图尺寸
+    private final PathOptions options;
 
     boolean[][][] mark0;
     boolean[][] cut;  //割点
@@ -51,7 +52,8 @@ public class myPathfinder {
     final byte[] bt = {1, 3, 2, 4, 5, 7, 6, 8};  //对应动作：l u r d L U R D
 
     //构造函数，参数为地图尺寸
-    public myPathfinder(int row, int col) {
+    public MyPathfinder(int row, int col, PathOptions options) {
+        this.options = options;
         //地图尺寸
         mMapRows = row;
         mMapCols = col;
@@ -123,7 +125,7 @@ public class myPathfinder {
             }
 
             //检查穿越情况
-            if (myMaps.m_Sets[17] == 1) {
+            if (options.crossingAllowed()) {
                 for (int i = 1; i < mMapRows - 1; i++) {
                     for (int j = 1; j < mMapCols - 1; j++) {
                         if ('-' == tmpLevel[i][j] && !mark[i][j]) {
@@ -229,7 +231,7 @@ public class myPathfinder {
             if (isFound) break;
 
             //四邻排查后，对不可达的特殊点，进行穿越排查
-            if (myMaps.m_Sets[17] == 1) {
+            if (options.crossingAllowed()) {
                 for (int i = 1; i < mMapRows - 1; i++) {
                     for (int j = 1; j < mMapCols - 1; j++) {
                         if ('-' == tmpLevel[i][j] && !mark[i][j]) {
@@ -515,7 +517,7 @@ public class myPathfinder {
             }
 
             //四邻排查后，对不可达的特殊点，进行穿越排查
-            if (myMaps.m_Sets[17] == 1) {
+            if (options.crossingAllowed()) {
                 for (int i = 1; i < mMapRows - 1; i++) {
                     for (int j = 1; j < mMapCols - 1; j++) {
                         if ('-' == tmpLevel[i][j] && !mark[i][j]) {
@@ -614,7 +616,7 @@ public class myPathfinder {
             }
 
             //当割点法不可达时，对于被点击的箱子做穿越检查
-            if (myMaps.m_Sets[17] == 1 || tmpLevel[boxR][boxC] == '-') {
+            if (options.crossingAllowed() || tmpLevel[boxR][boxC] == '-') {
                 tmpLevel[boxR][boxC] = '$';
                 ls_flg = manTo2(flg, tmpLevel, boxR, boxC, firR, firC, secR, secC);
                 tmpLevel[boxR][boxC] = '-';
@@ -836,8 +838,8 @@ public class myPathfinder {
         depth = 0;
         b_count = -1;  //块号有从 -1 递减来标示
 
-        for (int i = 0; i < myMaps.curMap.Rows; i++) {
-            for (int j = 0; j < myMaps.curMap.Cols; j++) {
+        for (int i = 0; i < mMapRows; i++) {
+            for (int j = 0; j < mMapCols; j++) {
                 //生成关卡副本
                 if (level[i][j] == '-' || level[i][j] == '.' || level[i][j] == '@' || level[i][j] == '+') tmpLevel[i][j] = '-';
                 else if (level[i][j] == '*') tmpLevel[i][j] = '$';

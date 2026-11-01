@@ -62,8 +62,9 @@ import java.util.regex.Pattern;
 import my.boxman.jsoko.DiagonalLock;
 import my.boxman.jsoko.FreezeLock;
 import my.boxman.jsoko.IntStack;
+import my.boxman.jsoko.LockBoard;
 
-public class myGameView extends Activity {
+public class myGameView extends Activity implements LockBoard {
 
     AsyncCountBoxsTask mTask;
     public RunMicroTask mMicroTask;
@@ -81,7 +82,7 @@ public class myGameView extends Activity {
     RefreshHandler4 myTimer4;
 
     myGameViewMap mMap;  //地图
-    myPathfinder mPathfinder;  //探路者
+    MyPathfinder mPathfinder;  //探路者
 
     //底行按钮
     CheckBox bt_UnDo = null;
@@ -117,7 +118,7 @@ public class myGameView extends Activity {
     LinkedList<Byte> m_lstMovReDo2;  //逆推 reDo 栈
 
     char[][] mArray9;  //检查死锁用的临时地图（空地图），正推根据目标数识别死锁时，也会用到
-    myPathfinder mPF;  //检查死锁用的探路者，正推根据目标数识别死锁时，也会用到
+    MyPathfinder mPF;  //检查死锁用的探路者，正推根据目标数识别死锁时，也会用到
     boolean[][] mark15, mark16, mark7, mark8, mark11, mark12, mark44;  //15、为逆推死点（不可推动的点）；16、为正推网锁点（不可推动的点）；7、为正推箱子初位；8、为正推初态地板；11、为哪个箱子能动或未动过；12、为正推未被使用过的地板；44、是否显示标尺
     short[][] mark14;  //14、为逆推可推的点（其它为推死的点）
     byte[][] mark41;  //网锁标志
@@ -152,6 +153,26 @@ public class myGameView extends Activity {
     DiagonalLock closedDiagonalLock;
     public FreezeLock freezeDeadlock;
     public byte[][] m_Freeze;  //检查冻结时使用的临时数字
+
+    @Override
+    public char[][] cells() {
+        return m_cArray;
+    }
+
+    @Override
+    public byte[][] freezeMarks() {
+        return m_Freeze;
+    }
+
+    @Override
+    public int playerRow() {
+        return m_nRow;
+    }
+
+    @Override
+    public int playerCol() {
+        return m_nCol;
+    }
 
     int m_nRow3;  //逆推过关时用，记录仓管员正推地图之初始占位
     int m_nCol3;
@@ -2006,7 +2027,7 @@ public class myGameView extends Activity {
             //箱子自动编号只针对人的活动范围内的箱子，手动编号针对“全部”箱子（包括墙外的箱子）
             mBoxNum(m_cArray, m_nRow, m_nCol);
 
-            mPathfinder = new myPathfinder(myMaps.curMap.Rows, myMaps.curMap.Cols);
+            mPathfinder = new MyPathfinder(myMaps.curMap.Rows, myMaps.curMap.Cols, () -> myMaps.m_Sets[17] == 1);
 
             m_iStep[0] = 0;      //记录正推"推"、"移"的步数
             m_iStep[1] = 0;
@@ -5535,7 +5556,7 @@ public class myGameView extends Activity {
                 mark16 = mk16;  //真正正推时，不允许推动的箱子（即那些正推初态中，不能移动的箱子 -- 形成网锁的箱子）
 
                 //正推法，测算逆推区域箱子数（区域的点位数）
-                mPF = new myPathfinder(m_Rows, m_Cols);  //检查死锁之探路者，正推根据目标数识别死锁时，也会用到
+                mPF = new MyPathfinder(m_Rows, m_Cols, () -> myMaps.m_Sets[17] == 1);  //检查死锁之探路者，正推根据目标数识别死锁时，也会用到
                 mPF.FindBlock(false, mArray, mRow, mCol);   //计算临时地图的割点，块
                 for (int i = 0; i < m_Rows; i++) {
                     for (int j = 0; j < m_Cols; j++) {

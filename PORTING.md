@@ -4,7 +4,7 @@
 > 本计划书写于移植开始前，文中出现的 `BoxManPC/` 目录**现已更名为 `desktop/`**；
 > 原版 Android 工程（原根目录的 `app/` 及根级 Gradle 文件）整体移入 `android/`。
 > 仓库根目录现在只有：`desktop/`（移植产物）、`android/`（原版参考）、
-> `README.md`、`PORTING.md`（本文）、`PORTING_AUDIT.md`。
+> `core/`（两端共享的纯 Java 逻辑）、`README.md`、`PORTING.md`（本文）、`PORTING_AUDIT.md`。
 > **文中其余内容（类名如 `BoxManPC.java`、`my.boxman.BoxManPC`、`BoxManPC.jar`）均未变，无需换算。**
 
 ## 项目概况与移植原则
