@@ -372,6 +372,8 @@ public class Phase42HoloDialogCarrierTest {
         File f = new File(System.getProperty("user.dir"),
                 "src/main/java/my/boxman/" + relPath);
         String src = new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
+        // Windows 上 core.autocrlf 会把源码检出成 CRLF；源码断言的换行必须先归一化。
+        src = src.replace("\r\n", "\n");
         return src.replaceAll("(?s)/\\*.*?\\*/", "").replaceAll("//[^\\n]*", "");
     }
 
