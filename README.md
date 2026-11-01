@@ -24,6 +24,17 @@ java -jar build/libs/BoxManPC-all.jar
 
 On Windows use `gradlew.bat`.
 
+## Android
+
+Requires JDK 17+ and Android SDK platform 36.
+
+```bash
+cd android
+
+./gradlew assembleDebug     # debug APK
+./gradlew assembleRelease   # minified release APK (debug signing for now)
+```
+
 ## Credits
 
 The original game is the work of [愉翁](https://github.com/yuweng227).
