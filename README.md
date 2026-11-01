@@ -8,7 +8,7 @@ This is a port of [BoxMan](https://github.com/yuweng227/BoxMan_And)[^boxman] to 
 
 ## Layout
 
-- `core/` — platform-independent game logic shared by both builds (solver, pathfinding, level parsing, deadlock checks).
+- `core/` — shared game logic: solver, pathfinding, deadlock checks, level models, settings and SQLite access.
 - `desktop/` — Swing client.
 - `android/` — Android client.
 
