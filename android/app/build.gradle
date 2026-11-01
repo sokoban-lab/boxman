@@ -49,6 +49,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
+    implementation 'my.boxman:boxman-core'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.core:core:1.15.0'
 }

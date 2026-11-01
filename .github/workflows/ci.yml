@@ -5,11 +5,13 @@ on:
     branches:
       - main
     paths:
+      - 'core/**'
       - 'desktop/**'
       - 'android/**'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
+      - 'core/**'
       - 'desktop/**'
       - 'android/**'
       - '.github/workflows/ci.yml'

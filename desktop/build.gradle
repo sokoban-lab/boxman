@@ -24,6 +24,7 @@ application {
 }
 
 dependencies {
+    implementation 'my.boxman:boxman-core'
     implementation libs.sqlite.jdbc
     implementation libs.flatlaf
     implementation libs.json.simple
