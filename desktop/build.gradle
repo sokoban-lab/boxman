@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'jacoco'
 }
 
 repositories {
@@ -9,8 +10,13 @@ repositories {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
 }
 
 application {
@@ -18,11 +24,23 @@ application {
 }
 
 dependencies {
-    implementation 'org.xerial:sqlite-jdbc:3.45.1.0'
-    implementation 'com.formdev:flatlaf:3.4'
-    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
-    implementation 'com.miglayout:miglayout-swing:11.3'
-    testImplementation 'junit:junit:4.13.2'
+    implementation libs.sqlite.jdbc
+    implementation libs.flatlaf
+    implementation libs.json.simple
+    implementation libs.miglayout.swing
+    testImplementation libs.junit
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+test {
+    finalizedBy jacocoTestReport
 }
 
 jar {

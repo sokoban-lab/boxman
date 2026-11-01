@@ -1,0 +1,13 @@
+[versions]
+flatlaf = "3.4"
+jsonSimple = "1.1.1"
+junit = "4.13.2"
+miglayout = "11.3"
+sqliteJdbc = "3.45.1.0"
+
+[libraries]
+flatlaf = { module = "com.formdev:flatlaf", version.ref = "flatlaf" }
+json-simple = { module = "com.googlecode.json-simple:json-simple", version.ref = "jsonSimple" }
+junit = { module = "junit:junit", version.ref = "junit" }
+miglayout-swing = { module = "com.miglayout:miglayout-swing", version.ref = "miglayout" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }

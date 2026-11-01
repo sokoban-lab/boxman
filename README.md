@@ -9,7 +9,7 @@ This is a port of [BoxMan](https://github.com/yuweng227/BoxMan_And)[^boxman] to 
 ## Requirements
 
 1. **Build requirement**: JDK 17 or newer. The bundled Gradle wrapper requires 17+.
-2. **Runtime requirement**: Java 8 or newer. The compiled bytecode targets Java 8, so the produced jar runs on any Java 8+ runtime.
+2. **Runtime requirement**: Java 17 or newer. The compiled bytecode targets Java 17.
 
 ## Build and run
 
