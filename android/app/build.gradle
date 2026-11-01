@@ -14,6 +14,7 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            // 暂时沿用 debug 签名；正式发布前替换为 CI keystore。
             signingConfig signingConfigs.debug
         }
     }
@@ -28,8 +29,8 @@ android {
     }
     useLibrary 'org.apache.http.legacy'   //解决导入org.apache问题
     compileOptions {
-        targetCompatibility JavaVersion.VERSION_1_8
-        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_17
     }
     namespace 'my.boxman'
     lint {
@@ -44,7 +45,5 @@ def releaseTime() {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation files('libs/json-simple-1.1.jar')
-    implementation "androidx.core:core-ktx:+"
-    implementation 'com.android.support:support-annotations:28.0.0'
+    implementation 'androidx.core:core:1.15.0'
 }

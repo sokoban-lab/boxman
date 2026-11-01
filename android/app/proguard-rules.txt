@@ -1,0 +1,7 @@
+# json-simple 通过动态类型解析 JSON，保留整包避免 R8 裁剪后解析失败。
+-keep class org.json.simple.** { *; }
+-dontwarn org.json.simple.**
+
+# Apache HttpClient 由 useLibrary 'org.apache.http.legacy' 提供，R8 只做链接检查。
+-dontwarn org.apache.http.**
+-dontwarn org.apache.commons.**
